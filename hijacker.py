@@ -42,10 +42,14 @@ class Functions:
             if len(row) == 15:
                 bssid = row[0].strip()
                 channel = row[3].strip()
-                auth = row[7].strip()
+                enc = row[5].strip()
+                pwr = row[8].strip()
                 essid = row[13].strip()
                 clients[bssid] = []
-                aps.append([bssid, channel, auth, essid])
+                vendor = subprocess.Popen(f"macchanger -l | grep -i {bssid[:8]} | cut -d '-' -f3", shell=True, stdout=subprocess.PIPE).communicate()[0].decode().strip()
+                if not vendor:
+                    vendor = 'Unknown Manufacturer'
+                aps.append([bssid, channel, enc, pwr, essid, vendor])
             
             if len(row) == 7:
                 station = row[0].strip()
