@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# Author Shubham Vishwakarma
+# Author: Shubham Vishwakarma
 # git/twitter: ShubhamVis98
 
-import gi, threading, subprocess, psutil, signal, csv, os, glob
+import gi, threading, subprocess, psutil, signal, csv, os, glob, time
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GdkPixbuf, GLib
 
@@ -71,8 +71,6 @@ class WifiRow(Gtk.ListBoxRow):
         self.sec = sec
         self.ch = ch
 
-        self.set_size_request(500, 50)
-
         # Create a button to hold the row content
         button = Gtk.Button()
         button.connect("clicked", self.on_button_clicked)
@@ -137,11 +135,14 @@ class Airodump(Functions):
     def scan_toggle(self, widget):
         current = self.btn_toggle_img.get_property('icon-name')
         if 'start' in current:
+            Functions.remove_files()
             self.proc = Functions.execute_cmd('airodump-ng -w _tmp --write-interval 1 --output-format csv,pcap --background 1 wlan1')
             self.btn_toggle_img.set_property('icon-name', 'media-playback-stop')
+            self._stop_signal = 0
+            threading.Thread(target=self.watchman).start()
         else:
+            self._stop_signal = 1
             Functions.interrupt_proc(self.proc)
-            Functions.remove_files()
             self.btn_toggle_img.set_property('icon-name', 'media-playback-start')
 
         # if tmp == 'stop':
@@ -174,6 +175,14 @@ class Airodump(Functions):
         aps, clients = Functions.extract_data('_tmp-01.csv')
         print(aps, clients)
 
+    def watchman(self):
+        while True:
+            time.sleep(1)
+            self.get_aps()
+            if self._stop_signal:
+                break
+
+
 class HijackerGUI(Gtk.Application):
     def __init__(self):
         Gtk.Application.__init__(self, application_id="in.fossfrog.hijacker")
@@ -188,7 +197,8 @@ class HijackerGUI(Gtk.Application):
         # Get The main window from the glade file
         window = builder.get_object('main')
         window.set_title(AppDetails.appname)
-        window.set_default_size(600, 400)
+        window.set_default_size(400, 500)
+        window.set_size_request(400, 500)
 
         # Show the window
         window.connect('destroy', Gtk.main_quit)
