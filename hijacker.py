@@ -94,7 +94,6 @@ class WifiRow(Gtk.ListBoxRow):
         # First Line: SSID, BSSID, Manufacturer
         ssid_label = Gtk.Label(label=f"<b>{ssid}</b>", use_markup=True, xalign=0)
         manufacturer_label = Gtk.Label(label=manufacturer, xalign=1)
-        manufacturer_label.set_margin_left(20)
         first_line = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         first_line.pack_start(ssid_label, True, True, 0)
         first_line.pack_start(manufacturer_label, False, False, 0)
@@ -140,7 +139,8 @@ class Airodump(Functions):
         current = self.btn_toggle_img.get_property('icon-name')
         if 'start' in current:
             Functions.remove_files()
-            self.proc = Functions.execute_cmd('airodump-ng -w _tmp --write-interval 1 --output-format csv,pcap --background 1 wlan1')
+            # self.proc = Functions.execute_cmd('airodump-ng -w _tmp --write-interval 1 --output-format csv,pcap --background 1 wlan1')
+            self.proc = Functions.execute_cmd('ls')
             self.btn_toggle_img.set_property('icon-name', 'media-playback-stop')
             self._stop_signal = 0
             threading.Thread(target=self.watchman).start()
@@ -149,25 +149,25 @@ class Airodump(Functions):
             Functions.interrupt_proc(self.proc)
             self.btn_toggle_img.set_property('icon-name', 'media-playback-start')
 
-        # if tmp == 'stop':
-        #     listbox = Gtk.ListBox()
-        #     listbox.set_selection_mode(Gtk.SelectionMode.NONE)
-        #     self.ap_list.pack_start(listbox, False, False, 0)
+        if current:
+            listbox = Gtk.ListBox()
+            listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+            self.ap_list.pack_start(listbox, False, False, 0)
 
-        #     # Sample Data
-        #     networks = [
-        #         ("CYTA", "38:D8:2F:XX:XX:XX", "ZTE Corporation", "-78", "WPA2", "1"),
-        #         ("Chris", "18:44:E6:XX:XX:XX", "ZTE Corporation", "-63", "WPA2", "3"),
-        #         ("Wind WiFi", "CC:7B:35:XX:XX:XX", "Unknown Manufacturer", "-86", "WPA2", "11"),
-        #         # Add more data as needed
-        #     ]
+            # Sample Data
+            networks = [
+                ("CYTA", "38:D8:2F:XX:XX:XX", "ZTE Corporation", "-78", "WPA2", "1"),
+                ("Chris", "18:44:E6:XX:XX:XX", "ZTE Corporation", "-63", "WPA2", "3"),
+                ("Wind WiFi", "CC:7B:35:XX:XX:XX", "Unknown Manufacturer", "-86", "WPA2", "11"),
+                # Add more data as needed
+            ]
 
-        #     # Add rows to ListBox
-        #     for network in networks:
-        #         row = WifiRow(*network)
-        #         listbox.add(row)
+            # Add rows to ListBox
+            for network in networks:
+                row = WifiRow(*network)
+                listbox.add(row)
 
-        #     self.ap_list.show_all()
+            self.ap_list.show_all()
 
     def add_btn(self):
         button = Gtk.Button(label=f"Button")
@@ -176,8 +176,10 @@ class Airodump(Functions):
         self.ap_list.show_all()
 
     def get_aps(self):
-        aps, clients = Functions.extract_data('_tmp-01.csv')
-        print(aps, clients)
+        _tmp = '_tmp-01.csv'
+        if os.path.exists(_tmp):
+            aps, clients = Functions.extract_data('_tmp-01.csv')
+            print(aps, clients)
 
     def watchman(self):
         while True:
