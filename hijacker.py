@@ -16,6 +16,11 @@ class AppDetails:
     applogo = f'{appinstallpath}/logo.svg'
 
 class Functions:
+    def set_app_theme(theme_name, isdark=False):
+        settings = Gtk.Settings.get_default()
+        settings.set_property("gtk-theme-name", theme_name)
+        settings.set_property("gtk-application-prefer-dark-theme", isdark)
+
     def execute_cmd(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, cwd=None, bufsize=0):
         proc = subprocess.Popen(cmd.split(), stdout=stdout, stderr=stderr, stdin=stdin, cwd=cwd, bufsize=bufsize)
         return proc
@@ -29,7 +34,9 @@ class Functions:
         if proc.poll() is None:
             proc.terminate()
 
-    def extract_data(csv_file):
+    def extract_data(csv_file='_tmp-01.csv'):
+        while not os.path.exists(csv_file):
+            pass
         with open(csv_file, 'r') as f:
             csv_data = f.read()
 
@@ -66,14 +73,14 @@ class Functions:
                 print(f"Deleted: {filename}")
 
 class WifiRow(Gtk.ListBoxRow):
-    def __init__(self, ssid, bssid, manufacturer, pwr, sec, ch):
+    def __init__(self, bssid, ch, sec, pwr, ssid, manufacturer):
         super(WifiRow, self).__init__()
-        self.ssid = ssid
         self.bssid = bssid
-        self.manufacturer = manufacturer
-        self.pwr = pwr
-        self.sec = sec
         self.ch = ch
+        self.sec = sec
+        self.pwr = pwr
+        self.ssid = ssid
+        self.manufacturer = manufacturer
 
         # Create a button to hold the row content
         button = Gtk.Button()
@@ -122,6 +129,7 @@ class WifiRow(Gtk.ListBoxRow):
 
 class Airodump(Functions):
     def __init__(self, builder):
+        Functions.set_app_theme("Adwaita", True)
         builder.get_object('btn_quit').connect('clicked', Gtk.main_quit)
         self.btn_toggle = builder.get_object('btn_toggle')
         self.btn_toggle_img = builder.get_object('btn_toggle_img')
@@ -131,6 +139,7 @@ class Airodump(Functions):
 
         self.btn_toggle.connect('clicked', self.scan_toggle)
         self.ap_list.set_homogeneous(False)
+        self.listbox = Gtk.ListBox()
     
     def run(self):
         pass
@@ -139,35 +148,21 @@ class Airodump(Functions):
         current = self.btn_toggle_img.get_property('icon-name')
         if 'start' in current:
             Functions.remove_files()
-            # self.proc = Functions.execute_cmd('airodump-ng -w _tmp --write-interval 1 --output-format csv,pcap --background 1 wlan1')
+            self.proc = Functions.execute_cmd('airodump-ng -w _tmp --write-interval 1 --output-format csv,pcap --background 1 wlan1')
             self.proc = Functions.execute_cmd('ls')
             self.btn_toggle_img.set_property('icon-name', 'media-playback-stop')
             self._stop_signal = 0
             threading.Thread(target=self.watchman).start()
+
+            for child in self.listbox.get_children():
+                self.listbox.remove(child)
+            self.listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+            self.ap_list.pack_start(self.listbox, False, False, 0)
+            self._tmp_aplist = []
         else:
             self._stop_signal = 1
             Functions.interrupt_proc(self.proc)
             self.btn_toggle_img.set_property('icon-name', 'media-playback-start')
-
-        if current:
-            listbox = Gtk.ListBox()
-            listbox.set_selection_mode(Gtk.SelectionMode.NONE)
-            self.ap_list.pack_start(listbox, False, False, 0)
-
-            # Sample Data
-            networks = [
-                ("CYTA", "38:D8:2F:XX:XX:XX", "ZTE Corporation", "-78", "WPA2", "1"),
-                ("Chris", "18:44:E6:XX:XX:XX", "ZTE Corporation", "-63", "WPA2", "3"),
-                ("Wind WiFi", "CC:7B:35:XX:XX:XX", "Unknown Manufacturer", "-86", "WPA2", "11"),
-                # Add more data as needed
-            ]
-
-            # Add rows to ListBox
-            for network in networks:
-                row = WifiRow(*network)
-                listbox.add(row)
-
-            self.ap_list.show_all()
 
     def add_btn(self):
         button = Gtk.Button(label=f"Button")
@@ -175,19 +170,22 @@ class Airodump(Functions):
         self.ap_list.pack_start(button, True, True, 0)
         self.ap_list.show_all()
 
-    def get_aps(self):
-        _tmp = '_tmp-01.csv'
-        if os.path.exists(_tmp):
-            aps, clients = Functions.extract_data('_tmp-01.csv')
-            print(aps, clients)
-
     def watchman(self):
         while True:
-            time.sleep(1)
-            self.get_aps()
             if self._stop_signal:
                 break
+            time.sleep(1)
 
+            aps, clients = Functions.extract_data()
+            print(f'APS: {aps}\nClients: {clients}')
+
+            networks = Functions.extract_data()[0][1:]
+            for network in networks:
+                if network[0] not in self._tmp_aplist:
+                    row = WifiRow(*network)
+                    self.listbox.add(row)
+                    self._tmp_aplist.append(network[0])
+                    self.ap_list.show_all()
 
 class HijackerGUI(Gtk.Application):
     def __init__(self):
