@@ -10,9 +10,9 @@ from gi.repository import Gtk, GdkPixbuf, GLib
 class AppDetails:
     appname = 'Hijacker'
     appversion = '1.0'
-    appinstallpath = '/usr/lib/hijacker'
-    # ui = f'{appinstallpath}/hijacker.ui'
-    ui = 'hijacker.ui'
+    # appinstallpath = '/usr/lib/hijacker'
+    appinstallpath = '.'
+    ui = f'{appinstallpath}/hijacker.ui'
     applogo = f'{appinstallpath}/logo.svg'
 
 class Functions:
@@ -130,7 +130,8 @@ class WifiRow(Gtk.ListBoxRow):
 class Airodump(Functions):
     def __init__(self, builder):
         Functions.set_app_theme("Adwaita", True)
-        builder.get_object('btn_quit').connect('clicked', self.quit)
+        self.builder = builder
+        self.builder.get_object('btn_quit').connect('clicked', self.quit)
         self.btn_toggle = builder.get_object('btn_toggle')
         self.btn_toggle_img = builder.get_object('btn_toggle_img')
         self.btn_menu = builder.get_object('btn_menu')
@@ -148,7 +149,15 @@ class Airodump(Functions):
         self._stop_signal = 1
         Gtk.main_quit()
 
+    def show_about(self):
+        about_win = self.builder.get_object('about_dialog')
+        about_win.set_title(AppDetails.appname)
+        about_win.set_default_size(400, 500)
+        about_win.set_size_request(400, 500)
+        about_win.show_all()
+
     def scan_toggle(self, widget):
+        self.show_about()
         current = self.btn_toggle_img.get_property('icon-name')
         if 'start' in current:
             Functions.remove_files()
@@ -203,14 +212,14 @@ class HijackerGUI(Gtk.Application):
         Airodump(builder).run()
 
         # Get The main window from the glade file
-        window = builder.get_object('main')
-        window.set_title(AppDetails.appname)
-        window.set_default_size(400, 500)
-        window.set_size_request(400, 500)
+        main_window = builder.get_object('hijacker_window')
+        main_window.set_title(AppDetails.appname)
+        main_window.set_default_size(400, 500)
+        main_window.set_size_request(400, 500)
 
-        # Show the window
-        window.connect('destroy', Gtk.main_quit)
-        window.show_all()
+        # Show the main_window
+        main_window.connect('destroy', Gtk.main_quit)
+        main_window.show_all()
 
 if __name__ == "__main__":
     nh = HijackerGUI().run(None)
