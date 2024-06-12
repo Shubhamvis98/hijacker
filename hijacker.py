@@ -130,7 +130,7 @@ class WifiRow(Gtk.ListBoxRow):
 class Airodump(Functions):
     def __init__(self, builder):
         Functions.set_app_theme("Adwaita", True)
-        builder.get_object('btn_quit').connect('clicked', Gtk.main_quit)
+        builder.get_object('btn_quit').connect('clicked', self.quit)
         self.btn_toggle = builder.get_object('btn_toggle')
         self.btn_toggle_img = builder.get_object('btn_toggle_img')
         self.btn_menu = builder.get_object('btn_menu')
@@ -143,6 +143,10 @@ class Airodump(Functions):
     
     def run(self):
         pass
+
+    def quit(self, widget):
+        self._stop_signal = 1
+        Gtk.main_quit()
 
     def scan_toggle(self, widget):
         current = self.btn_toggle_img.get_property('icon-name')
