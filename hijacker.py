@@ -8,12 +8,12 @@ from gi.repository import Gtk, GdkPixbuf, GLib
 
 
 class AppDetails:
-    appname = 'Hijacker'
-    appversion = '1.0'
-    # appinstallpath = '/usr/lib/hijacker'
-    appinstallpath = '.'
-    ui = f'{appinstallpath}/hijacker.ui'
-    applogo = f'{appinstallpath}/logo.svg'
+    name = 'Hijacker'
+    version = '1.0'
+    # install_path = '/usr/lib/hijacker'
+    install_path = '.'
+    ui = f'{install_path}/hijacker.ui'
+    applogo = 'in.fossfrog.hijacker'
 
 class Functions:
     def set_app_theme(theme_name, isdark=False):
@@ -154,10 +154,11 @@ class Airodump(Functions):
     def show_about(self, widget=None):
         about_win = self.builder.get_object('about_dialog')
         about_win.connect('response', self.on_active_response)
-        about_win.set_title(AppDetails.appname)
+        about_win.set_title(AppDetails.name)
+        about_win.set_version(AppDetails.version)
         # about_win.set_default_size(400, 500)
         # about_win.set_size_request(400, 500)
-        about_win.show()
+        about_win.run()
 
     def on_active_response(self, dialog, response_id):
         dialog.hide()
@@ -218,7 +219,7 @@ class HijackerGUI(Gtk.Application):
 
         # Get The main window from the glade file
         main_window = builder.get_object('hijacker_window')
-        main_window.set_title(AppDetails.appname)
+        main_window.set_title(AppDetails.name)
         main_window.set_default_size(400, 500)
         main_window.set_size_request(400, 500)
 

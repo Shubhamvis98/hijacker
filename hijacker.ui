@@ -5,14 +5,14 @@
   <object class="GtkAboutDialog" id="about_dialog">
     <property name="can-focus">False</property>
     <property name="type-hint">dialog</property>
-    <property name="program-name">Glade</property>
+    <property name="program-name">Hijacker</property>
     <property name="version">@version@</property>
     <property name="copyright" translatable="yes">Copyright © 2024 Shubham Vishwakarma</property>
     <property name="comments" translatable="yes">A Clone of Android's Hijacker for Linux Phones</property>
     <property name="website">https://fossfrog.in</property>
     <property name="website-label" translatable="yes">Visit Hijacker Website</property>
     <property name="authors">Shubham Vishwakarma</property>
-    <property name="logo-icon-name">in.fossfrog.networkscanner</property>
+    <property name="logo-icon-name">in.fossfrog.hijacker</property>
     <property name="license-type">gpl-3-0</property>
     <child internal-child="vbox">
       <object class="GtkBox">
