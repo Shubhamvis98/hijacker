@@ -141,6 +141,8 @@ class Airodump(Functions):
         self.btn_toggle.connect('clicked', self.scan_toggle)
         self.ap_list.set_homogeneous(False)
         self.listbox = Gtk.ListBox()
+
+        self.builder.get_object('btn_about').connect('clicked', self.show_about)
     
     def run(self):
         pass
@@ -149,15 +151,18 @@ class Airodump(Functions):
         self._stop_signal = 1
         Gtk.main_quit()
 
-    def show_about(self):
+    def show_about(self, widget=None):
         about_win = self.builder.get_object('about_dialog')
+        about_win.connect('response', self.on_active_response)
         about_win.set_title(AppDetails.appname)
-        about_win.set_default_size(400, 500)
-        about_win.set_size_request(400, 500)
-        about_win.show_all()
+        # about_win.set_default_size(400, 500)
+        # about_win.set_size_request(400, 500)
+        about_win.show()
+
+    def on_active_response(self, dialog, response_id):
+        dialog.hide()
 
     def scan_toggle(self, widget):
-        self.show_about()
         current = self.btn_toggle_img.get_property('icon-name')
         if 'start' in current:
             Functions.remove_files()
