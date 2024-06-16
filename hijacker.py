@@ -76,7 +76,18 @@ class Functions:
     def read_config():
         with open(AppDetails.config_file, "r") as f:
             return json.load(f)
-    
+
+    def get_ifaces():
+        wifi_interfaces = []
+        for interface in psutil.net_if_addrs().keys():
+            try:
+                output = subprocess.check_output(['iwconfig', interface], stderr=subprocess.STDOUT).decode()
+                if 'ESSID' in output or 'Monitor' in output:
+                    wifi_interfaces.append(interface)
+            except subprocess.CalledProcessError:
+                pass
+        return wifi_interfaces
+
 class WifiRow(Gtk.ListBoxRow):
     def __init__(self, bssid, ch, sec, pwr, ssid, manufacturer):
         super(WifiRow, self).__init__()
@@ -168,6 +179,7 @@ class Airodump(Functions):
 
     def check_config(self):
         default_config_data = {
+            'interface': 'wlan0',
             'check_aps': 'true',
             'check_stations': 'true',
             'channels_entry': '',
@@ -184,6 +196,20 @@ class Airodump(Functions):
 
     def scan_toggle(self, widget):
         current = self.btn_toggle_img.get_property('icon-name')
+
+        # Load config
+        load_config = Functions.read_config()
+        show_aps = load_config['check_aps'] == 'true'
+        show_stations = load_config['check_stations'] == 'true'
+        channels_all = load_config['channels_all'] == 'true'
+        channels_entry = f"-c {load_config['channels_entry']}" if load_config['channels_entry'] != '' else channels_all
+
+        scan_command = 'airodump-ng -w _tmp --write-interval 1 --output-format csv,pcap --background 1 {channels} {interface}'
+
+        if channels_all:
+            channels = ''
+
+
         if 'start' in current:
             Functions.remove_files()
             self.proc = Functions.execute_cmd('airodump-ng -w _tmp --write-interval 1 --output-format csv,pcap --background 1 wlan1')
@@ -232,6 +258,12 @@ class Config_Window(Functions):
         self.config_win = builder.get_object('config_window')
         self.config_win.set_title('Configuration')
 
+        # Interfaces
+        self.interface = builder.get_object('interfaces_list')
+        self.ifaces = Functions.get_ifaces()
+        for i in self.ifaces:
+            self.interface.append_text(i)
+
         # Filters
         self.check_aps = builder.get_object('check_aps')
         self.check_stations = builder.get_object('check_stations')
@@ -258,7 +290,11 @@ class Config_Window(Functions):
         if os.path.exists(AppDetails.config_file):
             with open(AppDetails.config_file, 'r') as config_file:
                 config_data = json.load(config_file)
-
+                try:
+                    self.interface.set_active(self.ifaces.index(config_data['interface']))
+                except ValueError:
+                    print(f"Interface {config_data['interface']} is not available.")
+                    self.interface.set_active(self.ifaces.index(0))
                 self.check_aps.set_active(config_data.get('check_aps', False))
                 self.check_stations.set_active(config_data.get('check_stations', False))
                 self.channels_entry.set_text(config_data.get('channels_entry', ''))
@@ -271,6 +307,7 @@ class Config_Window(Functions):
     def save_config(self, widget):
         # Collect data from the UI elements
         config_data = {
+            'interface': self.interface.get_active_text(),
             'check_aps': self.check_aps.get_active(),
             'check_stations': self.check_stations.get_active(),
             'channels_entry': self.channels_entry.get_text(),
