@@ -202,17 +202,13 @@ class Airodump(Functions):
         show_aps = load_config['check_aps'] == 'true'
         show_stations = load_config['check_stations'] == 'true'
         channels_all = load_config['channels_all'] == 'true'
-        channels_entry = f"-c {load_config['channels_entry']}" if load_config['channels_entry'] != '' else channels_all
+        channels_entry = f"-c {load_config['channels_entry']}" if load_config['channels_entry'] != '' else ''
 
-        scan_command = 'airodump-ng -w _tmp --write-interval 1 --output-format csv,pcap --background 1 {channels} {interface}'
-
-        if channels_all:
-            channels = ''
-
+        scan_command = f"airodump-ng -w _tmp --write-interval 1 --output-format csv,pcap --background 1 {channels_entry} {load_config['interface']}"
 
         if 'start' in current:
             Functions.remove_files()
-            self.proc = Functions.execute_cmd('airodump-ng -w _tmp --write-interval 1 --output-format csv,pcap --background 1 wlan1')
+            self.proc = Functions.execute_cmd(scan_command)
             self.proc = Functions.execute_cmd('ls')
             self.btn_toggle_img.set_property('icon-name', 'media-playback-stop')
             self._stop_signal = 0
