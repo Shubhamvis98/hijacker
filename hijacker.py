@@ -2,7 +2,7 @@
 # Author: Shubham Vishwakarma
 # git/twitter: ShubhamVis98
 
-import gi, threading, subprocess, psutil, signal, csv, os, glob, time
+import gi, threading, subprocess, psutil, signal, csv, os, glob, time, json
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GdkPixbuf, GLib
 
@@ -14,6 +14,7 @@ class AppDetails:
     install_path = '.'
     ui = f'{install_path}/hijacker.ui'
     applogo = 'in.fossfrog.hijacker'
+    config_file = './configuration.json'
 
 class Functions:
     def set_app_theme(theme_name, isdark=False):
@@ -72,6 +73,10 @@ class Functions:
                 os.remove(filename)
                 print(f"Deleted: {filename}")
 
+    def read_config():
+        with open(AppDetails.config_file, "r") as f:
+            return json.load(f)
+    
 class WifiRow(Gtk.ListBoxRow):
     def __init__(self, bssid, ch, sec, pwr, ssid, manufacturer):
         super(WifiRow, self).__init__()
@@ -142,10 +147,11 @@ class Airodump(Functions):
         self.ap_list.set_homogeneous(False)
         self.listbox = Gtk.ListBox()
 
+        self.builder.get_object('btn_config').connect('clicked', Config_Window)
         self.builder.get_object('btn_about').connect('clicked', self.show_about)
-    
+
     def run(self):
-        pass
+        self.check_config()
 
     def quit(self, widget):
         self._stop_signal = 1
@@ -159,6 +165,19 @@ class Airodump(Functions):
         # about_win.set_default_size(400, 500)
         # about_win.set_size_request(400, 500)
         about_win.run()
+
+    def check_config(self):
+        default_config_data = {
+            'check_aps': 'true',
+            'check_stations': 'true',
+            'channels_entry': '',
+            'channels_all': 'true'
+        }
+        if not os.path.exists(AppDetails.config_file):
+            print('No config file found. Creating default config file.')
+            with open(AppDetails.config_file, 'w') as config_file:
+                json.dump(default_config_data, config_file, indent=4)
+
 
     def on_active_response(self, dialog, response_id):
         dialog.hide()
@@ -206,6 +225,67 @@ class Airodump(Functions):
                     self._tmp_aplist.append(network[0])
                     self.ap_list.show_all()
 
+class Config_Window(Functions):
+    def __init__(self, widget):
+        builder = Gtk.Builder()
+        builder.add_from_file(AppDetails.ui)
+        self.config_win = builder.get_object('config_window')
+        self.config_win.set_title('Configuration')
+
+        # Filters
+        self.check_aps = builder.get_object('check_aps')
+        self.check_stations = builder.get_object('check_stations')
+
+        # Channels
+        self.channels_entry = builder.get_object('channels_entry')
+        self.channels_all = builder.get_object('channels_all')
+
+        # Buttons
+        self.btn_config_save = builder.get_object('btn_config_save')
+        self.btn_config_cancel = builder.get_object('btn_config_cancel')
+        self.btn_config_quit = builder.get_object('btn_config_quit')
+
+        self.btn_config_save.connect('clicked', self.save_config)
+        self.btn_config_cancel.connect('clicked', self.quit)
+        self.btn_config_quit.connect('clicked', self.quit)
+
+        self.load_config()
+
+        self.config_win.show()
+
+    def load_config(self):
+        # Check if the config file exists
+        if os.path.exists(AppDetails.config_file):
+            with open(AppDetails.config_file, 'r') as config_file:
+                config_data = json.load(config_file)
+
+                self.check_aps.set_active(config_data.get('check_aps', False))
+                self.check_stations.set_active(config_data.get('check_stations', False))
+                self.channels_entry.set_text(config_data.get('channels_entry', ''))
+                self.channels_all.set_active(config_data.get('channels_all', False))
+
+            print(f'Configuration loaded from {AppDetails.config_file}.')
+        else:
+            print('No configuration file found.')
+
+    def save_config(self, widget):
+        # Collect data from the UI elements
+        config_data = {
+            'check_aps': self.check_aps.get_active(),
+            'check_stations': self.check_stations.get_active(),
+            'channels_entry': self.channels_entry.get_text(),
+            'channels_all': self.channels_all.get_active()
+        }
+
+        # Save the data to a JSON file
+        with open(AppDetails.config_file, 'w') as config_file:
+            json.dump(config_data, config_file, indent=4)
+
+        print(f'Configuration saved to {AppDetails.config_file}.')        
+
+    def quit(self, widget):
+        self.config_win.destroy()
+
 class HijackerGUI(Gtk.Application):
     def __init__(self):
         Gtk.Application.__init__(self, application_id="in.fossfrog.hijacker")
@@ -225,7 +305,7 @@ class HijackerGUI(Gtk.Application):
 
         # Show the main_window
         main_window.connect('destroy', Gtk.main_quit)
-        main_window.show_all()
+        main_window.show()
 
 if __name__ == "__main__":
     nh = HijackerGUI().run(None)
