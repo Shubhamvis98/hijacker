@@ -26,14 +26,15 @@ class Functions:
         proc = subprocess.Popen(cmd.split(), stdout=stdout, stderr=stderr, stdin=stdin, cwd=cwd, bufsize=bufsize)
         return proc
 
-    def interrupt_proc(proc):
-        os.kill(proc.pid, signal.SIGINT)
-        while proc.poll() is None:
-            pass
-
-    def terminate_proc(proc):
-        if proc.poll() is None:
-            proc.terminate()
+    def terminate_processes(proc_name, params):
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            if proc.info['name'] == proc_name and params in str(proc.info['cmdline']):
+                try:
+                    os.kill(proc.info['pid'], signal.SIGINT)
+                    # p = psutil.Process(proc.info['pid'])
+                    # p.terminate()
+                except psutil.NoSuchProcess as e:
+                    print(f"Error terminating process {proc.info['pid']}: {e}")
 
     def extract_data(csv_file='_tmp-01.csv'):
         while not os.path.exists(csv_file):
@@ -205,6 +206,7 @@ class Airodump(Functions):
         channels_entry = f"-c {load_config['channels_entry']}" if load_config['channels_entry'] != '' else ''
 
         scan_command = f"airodump-ng -w _tmp --write-interval 1 --output-format csv,pcap --background 1 {channels_entry} {load_config['interface']}"
+        print(scan_command)
 
         if 'start' in current:
             Functions.remove_files()
@@ -221,7 +223,7 @@ class Airodump(Functions):
             self._tmp_aplist = []
         else:
             self._stop_signal = 1
-            Functions.interrupt_proc(self.proc)
+            Functions.terminate_processes('airodump-ng', 'background')
             self.btn_toggle_img.set_property('icon-name', 'media-playback-start')
 
     def add_btn(self):
@@ -314,7 +316,8 @@ class Config_Window(Functions):
         with open(AppDetails.config_file, 'w') as config_file:
             json.dump(config_data, config_file, indent=4)
 
-        print(f'Configuration saved to {AppDetails.config_file}.')        
+        print(f'Configuration saved to {AppDetails.config_file}.')      
+        self.config_win.destroy()
 
     def quit(self, widget):
         self.config_win.destroy()
