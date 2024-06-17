@@ -204,9 +204,12 @@ class Airodump(Functions):
         show_stations = load_config['check_stations'] == 'true'
         channels_all = load_config['channels_all'] == 'true'
         channels_entry = f"-c {load_config['channels_entry']}" if load_config['channels_entry'] != '' else ''
+        iface = load_config['interface']
 
-        scan_command = f"airodump-ng -w _tmp --write-interval 1 --output-format csv,pcap --background 1 {channels_entry} {load_config['interface']}"
-        print(scan_command)
+        if iface not in Functions.get_ifaces():
+            print(f'{iface} not available. Please change the interface from configuration.')
+            return
+        scan_command = f"airodump-ng -w _tmp --write-interval 1 --output-format csv,pcap --background 1 {channels_entry} {iface}"
 
         if 'start' in current:
             Functions.remove_files()
@@ -292,7 +295,6 @@ class Config_Window(Functions):
                     self.interface.set_active(self.ifaces.index(config_data['interface']))
                 except ValueError:
                     print(f"Interface {config_data['interface']} is not available.")
-                    self.interface.set_active(self.ifaces.index(0))
                 self.check_aps.set_active(config_data.get('check_aps', False))
                 self.check_stations.set_active(config_data.get('check_stations', False))
                 self.channels_entry.set_text(config_data.get('channels_entry', ''))
