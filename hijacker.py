@@ -43,7 +43,7 @@ class Functions:
             csv_data = f.read()
 
         aps = []
-        clients = {}
+        clients = []
 
         reader = csv.reader(csv_data.splitlines())
 
@@ -54,17 +54,16 @@ class Functions:
                 enc = row[5].strip()
                 pwr = row[8].strip()
                 essid = row[13].strip()
-                clients[bssid] = []
                 vendor = subprocess.Popen(f"macchanger -l | grep -i {bssid[:8]} | cut -d '-' -f3", shell=True, stdout=subprocess.PIPE).communicate()[0].decode().strip()
                 if not vendor:
                     vendor = 'Unknown Manufacturer'
                 aps.append([bssid, channel, enc, pwr, essid, vendor])
             
             if len(row) == 7:
-                station = row[0].strip()
-                bssid = row[5].strip()
-                if bssid != '(not associated)':
-                    clients[bssid].append(station)
+                st = row[0].strip()
+                ap = row[5].strip()
+                if ap != '(not associated)':
+                    clients.append([st, ap])
 
         return [aps, clients]
 
@@ -89,9 +88,9 @@ class Functions:
                 pass
         return wifi_interfaces
 
-class WifiRow(Gtk.ListBoxRow):
+class APRow(Gtk.ListBoxRow):
     def __init__(self, bssid, ch, sec, pwr, ssid, manufacturer):
-        super(WifiRow, self).__init__()
+        super(APRow, self).__init__()
         self.bssid = bssid
         self.ch = ch
         self.sec = sec
@@ -143,6 +142,26 @@ class WifiRow(Gtk.ListBoxRow):
         # Handle the button click event
         print(f"Clicked on SSID: {self.ssid}, BSSID: {self.bssid}, Manufacturer: {self.manufacturer}, PWR: {self.pwr}, SEC: {self.sec}, CH: {self.ch}")
 
+class STRow(Gtk.ListBoxRow):
+    def __init__(self, ap, st):
+        super(STRow, self).__init__()
+        self.ap = ap
+        self.st = st
+
+        button = Gtk.Button()
+        # button.connect("clicked", self.on_button_clicked)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        st_label = Gtk.Label(label=f"<b>{ap}</b>", use_markup=True)
+        ap_label = Gtk.Label(label=f"<b>{st}</b>", use_markup=True)
+        arrow = Gtk.Label(label="~~~>", use_markup=True)
+        box.pack_start(st_label, True, True, 0)
+        box.pack_start(arrow, True, True, 0)
+        box.pack_start(ap_label, True, True, 0)
+
+        button.add(box)
+
+        self.add(button)
 
 class Airodump(Functions):
     def __init__(self, builder):
@@ -223,7 +242,7 @@ class Airodump(Functions):
                 self.listbox.remove(child)
             self.listbox.set_selection_mode(Gtk.SelectionMode.NONE)
             self.ap_list.pack_start(self.listbox, False, False, 0)
-            self._tmp_aplist = []
+            self._tmp_aplist = self._tmp_stlist = []
         else:
             self._stop_signal = 1
             Functions.terminate_processes('airodump-ng', 'background')
@@ -241,16 +260,24 @@ class Airodump(Functions):
                 break
             time.sleep(1)
 
-            aps, clients = Functions.extract_data()
-            print(f'APS: {aps}\nClients: {clients}')
+            aps, stations = Functions.extract_data()
+            print(f'APS: {aps}\nClients: {stations}')
 
-            networks = Functions.extract_data()[0][1:]
-            for network in networks:
-                if network[0] not in self._tmp_aplist:
-                    row = WifiRow(*network)
+            for _ap in aps[1:]:
+                if _ap[0] not in self._tmp_aplist:
+                    row = APRow(*_ap)
                     self.listbox.add(row)
-                    self._tmp_aplist.append(network[0])
+                    self._tmp_aplist.append(_ap[0])
                     self.ap_list.show_all()
+
+            print(f'hello {stations}')
+            for _st in stations[1:]:
+                if _st[0] not in self._tmp_stlist:
+                    row = STRow(*_st)
+                    self.listbox.add(row)
+                    self._tmp_stlist.append(_st[0])
+                    self.ap_list.show_all()
+
 
 class Config_Window(Functions):
     def __init__(self, widget):
