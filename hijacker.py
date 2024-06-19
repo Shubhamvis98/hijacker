@@ -149,7 +149,7 @@ class STRow(Gtk.ListBoxRow):
         self.st = st
 
         button = Gtk.Button()
-        # button.connect("clicked", self.on_button_clicked)
+        button.connect("clicked", self.on_button_clicked)
 
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         st_label = Gtk.Label(label=f"<b>{ap}</b>", use_markup=True)
@@ -162,6 +162,9 @@ class STRow(Gtk.ListBoxRow):
         button.add(box)
 
         self.add(button)
+
+    def on_button_clicked(self, widget):
+        print(f"Clicked on Station {self.ap} connected to {self.st}")
 
 class Airodump(Functions):
     def __init__(self, builder):
@@ -270,7 +273,6 @@ class Airodump(Functions):
                     self._tmp_aplist.append(_ap[0])
                     self.ap_list.show_all()
 
-            print(f'hello {stations}')
             for _st in stations[1:]:
                 if _st[0] not in self._tmp_stlist:
                     row = STRow(*_st)
