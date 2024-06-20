@@ -2,9 +2,10 @@
 # Author: Shubham Vishwakarma
 # git/twitter: ShubhamVis98
 
-import gi, threading, subprocess, psutil, signal, csv, os, glob, time, json
+import gi, threading, subprocess, psutil, signal, csv, os, glob, time, json, pyperclip
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GdkPixbuf, GLib
+os.environ["PYPERCLIP_BACKEND"] = "xclip"
 
 
 class AppDetails:
@@ -100,7 +101,7 @@ class APRow(Gtk.ListBoxRow):
 
         # Create a button to hold the row content
         button = Gtk.Button()
-        button.connect("clicked", self.on_button_clicked)
+        button.connect("clicked", self.ap_clicked)
 
         # Main container inside the button
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
@@ -138,18 +139,48 @@ class APRow(Gtk.ListBoxRow):
         # Add the button to the ListBoxRow
         self.add(button)
 
-    def on_button_clicked(self, widget):
-        # Handle the button click event
-        print(f"Clicked on SSID: {self.ssid}, BSSID: {self.bssid}, Manufacturer: {self.manufacturer}, PWR: {self.pwr}, SEC: {self.sec}, CH: {self.ch}")
+    def ap_clicked(self, widget):
+        # Create context menu and items
+        context_menu = Gtk.Menu()
+        copy_mac = Gtk.MenuItem(label="Copy MAC")
+        deauth = Gtk.MenuItem(label="Deauth")
+        watch = Gtk.MenuItem(label="Watch")
+
+        # Connect the menu items to callback functions
+        copy_mac.connect("activate", self.copy_mac)
+        deauth.connect("activate", self.deauth)
+        watch.connect("activate", self.watch)
+
+        # Add menu items to the context menu
+        context_menu.append(copy_mac)
+        context_menu.append(deauth)
+        context_menu.append(watch)
+
+        # Show all menu items
+        context_menu.show_all()
+        context_menu.popup(None, None, None, None, 0, Gtk.get_current_event_time())
+
+    def copy_mac(self, widget):
+        print(f'Copied to clipboard: {self.bssid}')
+        pyperclip.copy(self.bssid)
+
+    def deauth(self, widget):
+        iface = Functions.read_config()['interface']
+        print(f'Deauthenticating {self.bssid} on channel {self.ch}')
+        Functions.execute_cmd(f'iwconfig {iface} channel {self.ch}')
+        Functions.execute_cmd(f'aireplay-ng -0 10 -a {self.bssid} {iface}')
+
+    def watch(self, widget):
+        pass
 
 class STRow(Gtk.ListBoxRow):
-    def __init__(self, ap, st):
+    def __init__(self, st, ap):
         super(STRow, self).__init__()
         self.ap = ap
         self.st = st
 
         button = Gtk.Button()
-        button.connect("clicked", self.on_button_clicked)
+        button.connect("clicked", self.st_clicked)
 
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         st_label = Gtk.Label(label=f"<b>{ap}</b>", use_markup=True)
@@ -163,8 +194,38 @@ class STRow(Gtk.ListBoxRow):
 
         self.add(button)
 
-    def on_button_clicked(self, widget):
-        print(f"Clicked on Station {self.ap} connected to {self.st}")
+    def st_clicked(self, widget):
+        # Create context menu and items
+        context_menu = Gtk.Menu()
+        copy_mac = Gtk.MenuItem(label="Copy MAC")
+        deauth = Gtk.MenuItem(label="Deauth")
+
+        # Connect the menu items to callback functions
+        copy_mac.connect("activate", self.copy_mac)
+        deauth.connect("activate", self.deauth)
+
+        # Add menu items to the context menu
+        context_menu.append(copy_mac)
+        context_menu.append(deauth)
+
+        # Show all menu items
+        context_menu.show_all()
+        context_menu.popup(None, None, None, None, 0, Gtk.get_current_event_time())
+
+    def copy_mac(self, widget):
+        pyperclip.copy(self.st)
+        print(f'Copied to clipboard: {self.st}')
+
+    def deauth(self, widget):
+        iface = Functions.read_config()['interface']
+        aps, clients = Functions.extract_data()
+        for ap in aps:
+            if self.ap in ap:
+                ch = ap[1]
+        print(f'Deauthenticating {self.st} connected with {self.ap} on channel {ch}')
+        Functions.execute_cmd(f'iwconfig {iface} channel {ch}')
+        Functions.execute_cmd(f'aireplay-ng -0 10 -a {self.ap} -c {self.st} {iface}')
+
 
 class Airodump(Functions):
     def __init__(self, builder):
