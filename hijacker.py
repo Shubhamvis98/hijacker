@@ -2,18 +2,20 @@
 # Author: Shubham Vishwakarma
 # git/twitter: ShubhamVis98
 
-import gi, threading, subprocess, psutil, signal, csv, os, glob, time
+import gi, threading, subprocess, psutil, signal, csv, os, glob, time, json, pyperclip
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GdkPixbuf, GLib
+os.environ["PYPERCLIP_BACKEND"] = "xclip"
 
 
 class AppDetails:
-    appname = 'Hijacker'
-    appversion = '1.0'
-    appinstallpath = '/usr/lib/hijacker'
-    # ui = f'{appinstallpath}/hijacker.ui'
-    ui = 'hijacker.ui'
-    applogo = f'{appinstallpath}/logo.svg'
+    name = 'Hijacker'
+    version = '1.0'
+    # install_path = '/usr/lib/hijacker'
+    install_path = '.'
+    ui = f'{install_path}/hijacker.ui'
+    applogo = 'in.fossfrog.hijacker'
+    config_file = './configuration.json'
 
 class Functions:
     def set_app_theme(theme_name, isdark=False):
@@ -25,14 +27,15 @@ class Functions:
         proc = subprocess.Popen(cmd.split(), stdout=stdout, stderr=stderr, stdin=stdin, cwd=cwd, bufsize=bufsize)
         return proc
 
-    def interrupt_proc(proc):
-        os.kill(proc.pid, signal.SIGINT)
-        while proc.poll() is None:
-            pass
-
-    def terminate_proc(proc):
-        if proc.poll() is None:
-            proc.terminate()
+    def terminate_processes(proc_name, params):
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            if proc.info['name'] == proc_name and params in str(proc.info['cmdline']):
+                try:
+                    os.kill(proc.info['pid'], signal.SIGINT)
+                    # p = psutil.Process(proc.info['pid'])
+                    # p.terminate()
+                except psutil.NoSuchProcess as e:
+                    print(f"Error terminating process {proc.info['pid']}: {e}")
 
     def extract_data(csv_file='_tmp-01.csv'):
         while not os.path.exists(csv_file):
@@ -41,7 +44,7 @@ class Functions:
             csv_data = f.read()
 
         aps = []
-        clients = {}
+        clients = []
 
         reader = csv.reader(csv_data.splitlines())
 
@@ -52,17 +55,16 @@ class Functions:
                 enc = row[5].strip()
                 pwr = row[8].strip()
                 essid = row[13].strip()
-                clients[bssid] = []
                 vendor = subprocess.Popen(f"macchanger -l | grep -i {bssid[:8]} | cut -d '-' -f3", shell=True, stdout=subprocess.PIPE).communicate()[0].decode().strip()
                 if not vendor:
                     vendor = 'Unknown Manufacturer'
                 aps.append([bssid, channel, enc, pwr, essid, vendor])
             
             if len(row) == 7:
-                station = row[0].strip()
-                bssid = row[5].strip()
-                if bssid != '(not associated)':
-                    clients[bssid].append(station)
+                st = row[0].strip()
+                ap = row[5].strip()
+                if ap != '(not associated)':
+                    clients.append([st, ap])
 
         return [aps, clients]
 
@@ -72,9 +74,24 @@ class Functions:
                 os.remove(filename)
                 print(f"Deleted: {filename}")
 
-class WifiRow(Gtk.ListBoxRow):
+    def read_config():
+        with open(AppDetails.config_file, "r") as f:
+            return json.load(f)
+
+    def get_ifaces():
+        wifi_interfaces = []
+        for interface in psutil.net_if_addrs().keys():
+            try:
+                output = subprocess.check_output(['iwconfig', interface], stderr=subprocess.STDOUT).decode()
+                if 'ESSID' in output or 'Monitor' in output:
+                    wifi_interfaces.append(interface)
+            except subprocess.CalledProcessError:
+                pass
+        return wifi_interfaces
+
+class APRow(Gtk.ListBoxRow):
     def __init__(self, bssid, ch, sec, pwr, ssid, manufacturer):
-        super(WifiRow, self).__init__()
+        super(APRow, self).__init__()
         self.bssid = bssid
         self.ch = ch
         self.sec = sec
@@ -84,7 +101,7 @@ class WifiRow(Gtk.ListBoxRow):
 
         # Create a button to hold the row content
         button = Gtk.Button()
-        button.connect("clicked", self.on_button_clicked)
+        button.connect("clicked", self.ap_clicked)
 
         # Main container inside the button
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
@@ -122,15 +139,99 @@ class WifiRow(Gtk.ListBoxRow):
         # Add the button to the ListBoxRow
         self.add(button)
 
-    def on_button_clicked(self, widget):
-        # Handle the button click event
-        print(f"Clicked on SSID: {self.ssid}, BSSID: {self.bssid}, Manufacturer: {self.manufacturer}, PWR: {self.pwr}, SEC: {self.sec}, CH: {self.ch}")
+    def ap_clicked(self, widget):
+        # Create context menu and items
+        context_menu = Gtk.Menu()
+        copy_mac = Gtk.MenuItem(label="Copy MAC")
+        deauth = Gtk.MenuItem(label="Deauth")
+        watch = Gtk.MenuItem(label="Watch")
+
+        # Connect the menu items to callback functions
+        copy_mac.connect("activate", self.copy_mac)
+        deauth.connect("activate", self.deauth)
+        watch.connect("activate", self.watch)
+
+        # Add menu items to the context menu
+        context_menu.append(copy_mac)
+        context_menu.append(deauth)
+        context_menu.append(watch)
+
+        # Show all menu items
+        context_menu.show_all()
+        context_menu.popup(None, None, None, None, 0, Gtk.get_current_event_time())
+
+    def copy_mac(self, widget):
+        print(f'Copied to clipboard: {self.bssid}')
+        pyperclip.copy(self.bssid)
+
+    def deauth(self, widget):
+        iface = Functions.read_config()['interface']
+        print(f'Deauthenticating {self.bssid} on channel {self.ch}')
+        Functions.execute_cmd(f'iwconfig {iface} channel {self.ch}')
+        Functions.execute_cmd(f'aireplay-ng -0 10 -a {self.bssid} {iface}')
+
+    def watch(self, widget):
+        pass
+
+class STRow(Gtk.ListBoxRow):
+    def __init__(self, st, ap):
+        super(STRow, self).__init__()
+        self.ap = ap
+        self.st = st
+
+        button = Gtk.Button()
+        button.connect("clicked", self.st_clicked)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        st_label = Gtk.Label(label=f"<b>{ap}</b>", use_markup=True)
+        ap_label = Gtk.Label(label=f"<b>{st}</b>", use_markup=True)
+        arrow = Gtk.Label(label="~~~>", use_markup=True)
+        box.pack_start(st_label, True, True, 0)
+        box.pack_start(arrow, True, True, 0)
+        box.pack_start(ap_label, True, True, 0)
+
+        button.add(box)
+
+        self.add(button)
+
+    def st_clicked(self, widget):
+        # Create context menu and items
+        context_menu = Gtk.Menu()
+        copy_mac = Gtk.MenuItem(label="Copy MAC")
+        deauth = Gtk.MenuItem(label="Deauth")
+
+        # Connect the menu items to callback functions
+        copy_mac.connect("activate", self.copy_mac)
+        deauth.connect("activate", self.deauth)
+
+        # Add menu items to the context menu
+        context_menu.append(copy_mac)
+        context_menu.append(deauth)
+
+        # Show all menu items
+        context_menu.show_all()
+        context_menu.popup(None, None, None, None, 0, Gtk.get_current_event_time())
+
+    def copy_mac(self, widget):
+        pyperclip.copy(self.st)
+        print(f'Copied to clipboard: {self.st}')
+
+    def deauth(self, widget):
+        iface = Functions.read_config()['interface']
+        aps, clients = Functions.extract_data()
+        for ap in aps:
+            if self.ap in ap:
+                ch = ap[1]
+        print(f'Deauthenticating {self.st} connected with {self.ap} on channel {ch}')
+        Functions.execute_cmd(f'iwconfig {iface} channel {ch}')
+        Functions.execute_cmd(f'aireplay-ng -0 10 -a {self.ap} -c {self.st} {iface}')
 
 
 class Airodump(Functions):
     def __init__(self, builder):
         Functions.set_app_theme("Adwaita", True)
-        builder.get_object('btn_quit').connect('clicked', self.quit)
+        self.builder = builder
+        self.builder.get_object('btn_quit').connect('clicked', self.quit)
         self.btn_toggle = builder.get_object('btn_toggle')
         self.btn_toggle_img = builder.get_object('btn_toggle_img')
         self.btn_menu = builder.get_object('btn_menu')
@@ -140,19 +241,62 @@ class Airodump(Functions):
         self.btn_toggle.connect('clicked', self.scan_toggle)
         self.ap_list.set_homogeneous(False)
         self.listbox = Gtk.ListBox()
-    
+
+        self.builder.get_object('btn_config').connect('clicked', Config_Window)
+        self.builder.get_object('btn_about').connect('clicked', self.show_about)
+
     def run(self):
-        pass
+        self.check_config()
 
     def quit(self, widget):
         self._stop_signal = 1
         Gtk.main_quit()
 
+    def show_about(self, widget=None):
+        about_win = self.builder.get_object('about_dialog')
+        about_win.connect('response', self.on_active_response)
+        about_win.set_title(AppDetails.name)
+        about_win.set_version(AppDetails.version)
+        # about_win.set_default_size(400, 500)
+        # about_win.set_size_request(400, 500)
+        about_win.run()
+
+    def check_config(self):
+        default_config_data = {
+            'interface': 'wlan0',
+            'check_aps': 'true',
+            'check_stations': 'true',
+            'channels_entry': '',
+            'channels_all': 'true'
+        }
+        if not os.path.exists(AppDetails.config_file):
+            print('No config file found. Creating default config file.')
+            with open(AppDetails.config_file, 'w') as config_file:
+                json.dump(default_config_data, config_file, indent=4)
+
+
+    def on_active_response(self, dialog, response_id):
+        dialog.hide()
+
     def scan_toggle(self, widget):
         current = self.btn_toggle_img.get_property('icon-name')
+
+        # Load config
+        load_config = Functions.read_config()
+        show_aps = load_config['check_aps'] == 'true'
+        show_stations = load_config['check_stations'] == 'true'
+        channels_all = load_config['channels_all'] == 'true'
+        channels_entry = f"-c {load_config['channels_entry']}" if load_config['channels_entry'] != '' else ''
+        iface = load_config['interface']
+
+        if iface not in Functions.get_ifaces():
+            print(f'{iface} not available. Please change the interface from configuration.')
+            return
+        scan_command = f"airodump-ng -w _tmp --write-interval 1 --output-format csv,pcap --background 1 {channels_entry} {iface}"
+
         if 'start' in current:
             Functions.remove_files()
-            self.proc = Functions.execute_cmd('airodump-ng -w _tmp --write-interval 1 --output-format csv,pcap --background 1 wlan1')
+            self.proc = Functions.execute_cmd(scan_command)
             self.proc = Functions.execute_cmd('ls')
             self.btn_toggle_img.set_property('icon-name', 'media-playback-stop')
             self._stop_signal = 0
@@ -162,10 +306,10 @@ class Airodump(Functions):
                 self.listbox.remove(child)
             self.listbox.set_selection_mode(Gtk.SelectionMode.NONE)
             self.ap_list.pack_start(self.listbox, False, False, 0)
-            self._tmp_aplist = []
+            self._tmp_aplist = self._tmp_stlist = []
         else:
             self._stop_signal = 1
-            Functions.interrupt_proc(self.proc)
+            Functions.terminate_processes('airodump-ng', 'background')
             self.btn_toggle_img.set_property('icon-name', 'media-playback-start')
 
     def add_btn(self):
@@ -180,16 +324,95 @@ class Airodump(Functions):
                 break
             time.sleep(1)
 
-            aps, clients = Functions.extract_data()
-            print(f'APS: {aps}\nClients: {clients}')
+            aps, stations = Functions.extract_data()
+            print(f'APS: {aps}\nClients: {stations}')
 
-            networks = Functions.extract_data()[0][1:]
-            for network in networks:
-                if network[0] not in self._tmp_aplist:
-                    row = WifiRow(*network)
+            for _ap in aps[1:]:
+                if _ap[0] not in self._tmp_aplist:
+                    row = APRow(*_ap)
                     self.listbox.add(row)
-                    self._tmp_aplist.append(network[0])
+                    self._tmp_aplist.append(_ap[0])
                     self.ap_list.show_all()
+
+            for _st in stations[1:]:
+                if _st[0] not in self._tmp_stlist:
+                    row = STRow(*_st)
+                    self.listbox.add(row)
+                    self._tmp_stlist.append(_st[0])
+                    self.ap_list.show_all()
+
+
+class Config_Window(Functions):
+    def __init__(self, widget):
+        builder = Gtk.Builder()
+        builder.add_from_file(AppDetails.ui)
+        self.config_win = builder.get_object('config_window')
+        self.config_win.set_title('Configuration')
+
+        # Interfaces
+        self.interface = builder.get_object('interfaces_list')
+        self.ifaces = Functions.get_ifaces()
+        for i in self.ifaces:
+            self.interface.append_text(i)
+
+        # Filters
+        self.check_aps = builder.get_object('check_aps')
+        self.check_stations = builder.get_object('check_stations')
+
+        # Channels
+        self.channels_entry = builder.get_object('channels_entry')
+        self.channels_all = builder.get_object('channels_all')
+
+        # Buttons
+        self.btn_config_save = builder.get_object('btn_config_save')
+        self.btn_config_cancel = builder.get_object('btn_config_cancel')
+        self.btn_config_quit = builder.get_object('btn_config_quit')
+
+        self.btn_config_save.connect('clicked', self.save_config)
+        self.btn_config_cancel.connect('clicked', self.quit)
+        self.btn_config_quit.connect('clicked', self.quit)
+
+        self.load_config()
+
+        self.config_win.show()
+
+    def load_config(self):
+        # Check if the config file exists
+        if os.path.exists(AppDetails.config_file):
+            with open(AppDetails.config_file, 'r') as config_file:
+                config_data = json.load(config_file)
+                try:
+                    self.interface.set_active(self.ifaces.index(config_data['interface']))
+                except ValueError:
+                    print(f"Interface {config_data['interface']} is not available.")
+                self.check_aps.set_active(config_data.get('check_aps', False))
+                self.check_stations.set_active(config_data.get('check_stations', False))
+                self.channels_entry.set_text(config_data.get('channels_entry', ''))
+                self.channels_all.set_active(config_data.get('channels_all', False))
+
+            print(f'Configuration loaded from {AppDetails.config_file}.')
+        else:
+            print('No configuration file found.')
+
+    def save_config(self, widget):
+        # Collect data from the UI elements
+        config_data = {
+            'interface': self.interface.get_active_text(),
+            'check_aps': self.check_aps.get_active(),
+            'check_stations': self.check_stations.get_active(),
+            'channels_entry': self.channels_entry.get_text(),
+            'channels_all': self.channels_all.get_active()
+        }
+
+        # Save the data to a JSON file
+        with open(AppDetails.config_file, 'w') as config_file:
+            json.dump(config_data, config_file, indent=4)
+
+        print(f'Configuration saved to {AppDetails.config_file}.')      
+        self.config_win.destroy()
+
+    def quit(self, widget):
+        self.config_win.destroy()
 
 class HijackerGUI(Gtk.Application):
     def __init__(self):
@@ -203,14 +426,14 @@ class HijackerGUI(Gtk.Application):
         Airodump(builder).run()
 
         # Get The main window from the glade file
-        window = builder.get_object('main')
-        window.set_title(AppDetails.appname)
-        window.set_default_size(400, 500)
-        window.set_size_request(400, 500)
+        main_window = builder.get_object('hijacker_window')
+        main_window.set_title(AppDetails.name)
+        main_window.set_default_size(400, 500)
+        main_window.set_size_request(400, 500)
 
-        # Show the window
-        window.connect('destroy', Gtk.main_quit)
-        window.show_all()
+        # Show the main_window
+        main_window.connect('destroy', Gtk.main_quit)
+        main_window.show()
 
 if __name__ == "__main__":
     nh = HijackerGUI().run(None)
