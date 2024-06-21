@@ -2,43 +2,112 @@
 <!-- Generated with glade 3.40.0 -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
-  <object class="GtkAboutDialog" id="about_dialog">
+  <object class="GtkWindow" id="about_window">
     <property name="can-focus">False</property>
-    <property name="type-hint">dialog</property>
-    <property name="program-name">Hijacker</property>
-    <property name="version">@version@</property>
-    <property name="copyright" translatable="yes">Copyright © 2024 Shubham Vishwakarma</property>
-    <property name="comments" translatable="yes">A Clone of Android's Hijacker for Linux Phones</property>
-    <property name="website">https://fossfrog.in</property>
-    <property name="website-label" translatable="yes">Visit Hijacker Website</property>
-    <property name="authors">Shubham Vishwakarma</property>
-    <property name="logo-icon-name">in.fossfrog.hijacker</property>
-    <property name="license-type">gpl-3-0</property>
-    <child internal-child="vbox">
+    <child>
       <object class="GtkBox">
+        <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox">
+        <property name="spacing">5</property>
+        <child>
+          <object class="GtkImage" id="app_logo">
+            <property name="visible">True</property>
             <property name="can-focus">False</property>
-            <property name="layout-style">end</property>
           </object>
           <packing>
             <property name="expand">False</property>
-            <property name="fill">False</property>
+            <property name="fill">True</property>
             <property name="position">0</property>
           </packing>
         </child>
         <child>
-          <!-- n-columns=4 n-rows=3 -->
-          <object class="GtkGrid" id="grid2">
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">5</property>
+            <child>
+              <object class="GtkLabel" id="app_name_ver">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">@app_name@ @version@</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="app_desc">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">@app_desc@</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="app_dev">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">@developer@</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLinkButton">
+                <property name="label" translatable="yes">Visit Hijacker Website</property>
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+                <property name="relief">none</property>
+                <property name="uri">https://fossfrog.in</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btn_about_close">
+            <property name="label" translatable="yes">Close</property>
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack-type">end</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <!-- n-columns=4 n-rows=1 -->
+          <object class="GtkGrid">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
             <property name="halign">center</property>
-            <property name="column-spacing">5</property>
+            <property name="column-spacing">2</property>
             <child>
-              <object class="GtkLabel" id="donation1">
+              <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
                 <property name="label" translatable="yes">Donations:</property>
@@ -49,7 +118,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLinkButton" id="liberapay1">
+              <object class="GtkLinkButton" id="liberapay">
                 <property name="label" translatable="yes">Liberapay</property>
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
@@ -63,7 +132,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLinkButton" id="buymeacoffee1">
+              <object class="GtkLinkButton" id="buymeacoffee">
                 <property name="label" translatable="yes">buymeacoffee</property>
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
@@ -77,7 +146,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLinkButton" id="patreon1">
+              <object class="GtkLinkButton" id="patreon">
                 <property name="label" translatable="yes">Patreon</property>
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
@@ -90,35 +159,12 @@
                 <property name="top-attach">0</property>
               </packing>
             </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
           </object>
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">2</property>
+            <property name="pack-type">end</property>
+            <property name="position">3</property>
           </packing>
         </child>
       </object>

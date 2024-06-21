@@ -4,18 +4,53 @@
 
 import gi, threading, subprocess, psutil, signal, csv, os, glob, time, json, pyperclip
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GdkPixbuf, GLib
+from gi.repository import Gtk, GdkPixbuf, GLib, Gdk
 os.environ["PYPERCLIP_BACKEND"] = "xclip"
 
 
 class AppDetails:
     name = 'Hijacker'
     version = '1.0'
-    # install_path = '/usr/lib/hijacker'
-    install_path = '.'
+    desc = "A Clone of Android's Hijacker for Linux Phones"
+    dev = 'Shubham Vishwakarma'
+    install_path = '/usr/lib/hijacker'
+    # install_path = '.'
     ui = f'{install_path}/hijacker.ui'
     applogo = 'in.fossfrog.hijacker'
     config_file = './configuration.json'
+
+class AboutScreen(Gtk.Window):
+    def __init__(self):
+        super().__init__()
+        builder = Gtk.Builder()
+        builder.add_from_file(AppDetails.ui)
+
+        # Get IDs from UI file
+        self.about_win = builder.get_object('about_window')
+        app_logo = builder.get_object('app_logo')
+        app_name_ver = builder.get_object('app_name_ver')
+        app_desc = builder.get_object('app_desc')
+        app_dev = builder.get_object('app_dev')
+        btn_about_close = builder.get_object('btn_about_close')
+
+        # Set logo
+        icon_theme = Gtk.IconTheme.get_default()
+        pixbuf = icon_theme.load_icon(AppDetails.applogo, 150, 0)
+        app_logo.set_from_pixbuf(pixbuf)
+
+        # Set app details
+        app_name_ver.set_markup(f'<b>{AppDetails.name} {AppDetails.version}</b>')
+        app_desc.set_markup(f'{AppDetails.desc}')
+        app_dev.set_markup(f'Copyright © 2024 {AppDetails.dev}')
+
+        btn_about_close.connect('clicked', self.on_close_clicked)
+
+        self.about_win.set_title('About')
+        self.add(self.about_win)
+        self.about_win.show()
+
+    def on_close_clicked(self, widget):
+        self.destroy()
 
 class Functions:
     def set_app_theme(theme_name, isdark=False):
@@ -253,13 +288,7 @@ class Airodump(Functions):
         Gtk.main_quit()
 
     def show_about(self, widget=None):
-        about_win = self.builder.get_object('about_dialog')
-        about_win.connect('response', self.on_active_response)
-        about_win.set_title(AppDetails.name)
-        about_win.set_version(AppDetails.version)
-        # about_win.set_default_size(400, 500)
-        # about_win.set_size_request(400, 500)
-        about_win.run()
+        AboutScreen()
 
     def check_config(self):
         default_config_data = {
@@ -273,7 +302,6 @@ class Airodump(Functions):
             print('No config file found. Creating default config file.')
             with open(AppDetails.config_file, 'w') as config_file:
                 json.dump(default_config_data, config_file, indent=4)
-
 
     def on_active_response(self, dialog, response_id):
         dialog.hide()

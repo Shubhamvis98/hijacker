@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=hijacker
+Comment=A Clone of Android's Hijacker for Linux Phones
+Encoding=UTF-8
+Exec=/usr/lib/hijacker/hijacker.py
+Icon=in.fossfrog.hijacker
+Terminal=false
+Type=Application
+Categories=06-wireless-attacks;
+X-Purism-FormFactor=Workstation;Mobile;
