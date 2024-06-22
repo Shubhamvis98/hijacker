@@ -358,14 +358,14 @@ class Airodump(Functions):
             print(f'APS: {aps}\nClients: {stations}')
 
             for _ap in aps[1:]:
-                if _ap[0] not in self._tmp_aplist:
+                if _ap[0] not in self._tmp_aplist and Functions.read_config()['check_aps']:
                     row = APRow(*_ap)
                     self.listbox.add(row)
                     self._tmp_aplist.append(_ap[0])
                     self.ap_list.show_all()
 
             for _st in stations[1:]:
-                if _st[0] not in self._tmp_stlist:
+                if _st[0] not in self._tmp_stlist and Functions.read_config()['check_stations']:
                     row = STRow(*_st)
                     self.listbox.add(row)
                     self._tmp_stlist.append(_st[0])
