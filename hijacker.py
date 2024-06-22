@@ -17,7 +17,8 @@ class AppDetails:
     # install_path = '.'
     ui = f'{install_path}/hijacker.ui'
     applogo = 'in.fossfrog.hijacker'
-    config_file = './configuration.json'
+    config_path = f"{os.path.expanduser('~')}/.config/hijacker"
+    config_file = f'{config_path}/configuration.json'
 
 class AboutScreen(Gtk.Window):
     def __init__(self):
@@ -300,6 +301,7 @@ class Airodump(Functions):
         }
         if not os.path.exists(AppDetails.config_file):
             print('No config file found. Creating default config file.')
+            os.makedirs(AppDetails.config_path, exist_ok=True)
             with open(AppDetails.config_file, 'w') as config_file:
                 json.dump(default_config_data, config_file, indent=4)
 
