@@ -445,6 +445,7 @@ class Config_Window(Functions):
 class HijackerGUI(Gtk.Application):
     def __init__(self):
         Gtk.Application.__init__(self, application_id="in.fossfrog.hijacker")
+        Gtk.Window.set_default_icon_name(AppDetails.applogo)
 
     def do_activate(self):
         builder = Gtk.Builder()
