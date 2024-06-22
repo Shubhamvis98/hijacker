@@ -34,12 +34,13 @@ icon_path='/usr/share/icons/hicolor/scalable/apps/in.fossfrog.hijacker.svg'
 case $1 in
 	install)
 		mkdir -v $install_dir
+		cp -rv hijacker /usr/bin
 		cp -rv `basename $icon_path` $icon_path
 		cp -rv hijacker.py hijacker.ui $install_dir
 		cp -v hijacker.desktop $desktop_file
 		chown root:root -R $install_dir
 		chmod 644 $desktop_file
-		chmod +x $install_dir/hijacker.py
+		chmod +x $install_dir/hijacker.py /usr/bin/hijacker
 		gtk-update-icon-cache /usr/share/icons/hicolor
 
 		echo '[+]Installation Completed'
@@ -49,6 +50,7 @@ case $1 in
 		rm -v $icon_path
 		rm -vrf $install_dir
 		rm -v $desktop_file
+		rm -v /usr/bin/hijacker
 
 		echo '[+]Removed'
 		;;
