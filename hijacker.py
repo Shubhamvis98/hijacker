@@ -180,17 +180,17 @@ class APRow(Gtk.ListBoxRow):
         context_menu = Gtk.Menu()
         copy_mac = Gtk.MenuItem(label="Copy MAC")
         deauth = Gtk.MenuItem(label="Deauth")
-        watch = Gtk.MenuItem(label="Watch")
+        # watch = Gtk.MenuItem(label="Watch")
 
         # Connect the menu items to callback functions
         copy_mac.connect("activate", self.copy_mac)
         deauth.connect("activate", self.deauth)
-        watch.connect("activate", self.watch)
+        # watch.connect("activate", self.watch)
 
         # Add menu items to the context menu
         context_menu.append(copy_mac)
         context_menu.append(deauth)
-        context_menu.append(watch)
+        # context_menu.append(watch)
 
         # Show all menu items
         context_menu.show_all()
@@ -202,7 +202,7 @@ class APRow(Gtk.ListBoxRow):
 
     def deauth(self, widget):
         iface = Functions.read_config()['interface']
-        print(f'Deauthenticating {self.bssid} on channel {self.ch}')
+        print(f'Deauthenticating all clients connected with {self.bssid} on channel {self.ch}')
         Functions.execute_cmd(f'iwconfig {iface} channel {self.ch}')
         Functions.execute_cmd(f'aireplay-ng -0 10 -a {self.bssid} {iface}')
 
