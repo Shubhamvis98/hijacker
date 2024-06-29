@@ -13,8 +13,8 @@ class AppDetails:
     version = '1.0'
     desc = "A Clone of Android's Hijacker for Linux Phones"
     dev = 'Shubham Vishwakarma'
-    install_path = '/usr/lib/hijacker'
-    # install_path = '.'
+    # install_path = '/usr/lib/hijacker'
+    install_path = '.'
     ui = f'{install_path}/hijacker.ui'
     applogo = 'in.fossfrog.hijacker'
     config_path = f"{os.path.expanduser('~')}/.config/hijacker"
@@ -51,6 +51,48 @@ class AboutScreen(Gtk.Window):
         self.about_win.show()
 
     def on_close_clicked(self, widget):
+        self.destroy()
+
+class MDK3(Gtk.Window):
+    def __init__(self):
+        super().__init__()
+        builder = Gtk.Builder()
+        builder.add_from_file(AppDetails.ui)
+        self.mdk3_window = builder.get_object('mdk3_window')
+
+        beacon_flood_toggle = builder.get_object('beacon_flood_toggle')
+        self.check_enc_ap = builder.get_object('check_enc_ap')
+        mdk3_ssid_file = builder.get_object('mdk3_ssid_file')
+        btn_mdk3_quit = builder.get_object('btn_mdk3_quit')
+
+        beacon_flood_toggle.connect("state-set", self.beacon_flood_toggle)
+        btn_mdk3_quit.connect('clicked', self.on_close_clicked)
+        mdk3_ssid_file.connect("file-set", self.on_ssid_file_set)
+
+        self.mdk3_window.set_default_size(400, 500)
+        self.mdk3_window.set_size_request(400, 500)
+
+        self.ssid_file = None
+
+        self.mdk3_window.set_title('MDK3')
+        self.add(self.mdk3_window)
+        self.mdk3_window.show()
+
+    def on_ssid_file_set(self, file_chooser):
+        self.ssid_file = file_chooser.get_filename()
+
+    def beacon_flood_toggle(self, switch, state):
+        if state:
+            iface = Functions.read_config()['interface']
+            isenc = f'-w' if self.check_enc_ap.get_active() else ''
+            ssid = f'-f {self.ssid_file}' if self.ssid_file else ''
+            command = f'mdk3 {iface} b {isenc} {ssid}'
+            Functions.execute_cmd(command)  
+        else:
+            Functions.terminate_processes('mdk3', 'b')
+
+    def on_close_clicked(self, widget):
+        Functions.terminate_processes('mdk3', 'b')
         self.destroy()
 
 class Functions:
@@ -280,6 +322,7 @@ class Airodump(Functions):
 
         self.builder.get_object('btn_config').connect('clicked', Config_Window)
         self.builder.get_object('btn_about').connect('clicked', self.show_about)
+        self.builder.get_object('btn_mdk3').connect('clicked', self.show_mdk3)
 
     def run(self):
         self.check_config()
@@ -290,6 +333,9 @@ class Airodump(Functions):
 
     def show_about(self, widget=None):
         AboutScreen()
+
+    def show_mdk3(self, widget=None):
+        MDK3()
 
     def check_config(self):
         default_config_data = {
