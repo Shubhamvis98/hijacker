@@ -16,8 +16,9 @@ class AppDetails:
     install_path = '/usr/lib/hijacker'
     # install_path = '.'
     ui = f'{install_path}/hijacker.ui'
-    applogo = 'in.fossfrog.hijacker'
-    config_path = f"{os.path.expanduser('~')}/.config/hijacker"
+    appid = 'in.fossfrog.hijacker'
+    applogo = appid
+    config_path = f"{os.path.expanduser('~')}/.config/{appid}"
     config_file = f'{config_path}/configuration.json'
 
 class AboutScreen(Gtk.Window):
@@ -492,7 +493,7 @@ class Config_Window(Functions):
 
 class HijackerGUI(Gtk.Application):
     def __init__(self):
-        Gtk.Application.__init__(self, application_id="in.fossfrog.hijacker")
+        Gtk.Application.__init__(self, application_id=AppDetails.appid)
         Gtk.Window.set_default_icon_name(AppDetails.applogo)
 
     def do_activate(self):
