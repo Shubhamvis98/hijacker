@@ -13,11 +13,11 @@ class AppDetails:
     version = '1.0'
     desc = "A Clone of Android's Hijacker for Linux Phones"
     dev = 'Shubham Vishwakarma'
-    install_path = '/usr/lib/hijacker'
-    # install_path = '.'
-    ui = f'{install_path}/hijacker.ui'
     appid = 'in.fossfrog.hijacker'
     applogo = appid
+    install_path = f'/usr/lib/{appid}'
+    # install_path = '.'
+    ui = f'{install_path}/hijacker.ui'
     config_path = f"{os.path.expanduser('~')}/.config/{appid}"
     config_file = f'{config_path}/configuration.json'
 
