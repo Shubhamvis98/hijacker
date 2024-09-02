@@ -349,7 +349,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="aircrack_toggle">
+                      <object class="GtkButton" id="aircrack_btn">
                         <property name="label" translatable="yes">Start Cracking</property>
                         <property name="visible">True</property>
                         <property name="can-focus">True</property>

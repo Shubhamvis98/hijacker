@@ -21,95 +21,6 @@ class AppDetails:
     config_path = f"{os.path.expanduser('~')}/.config/{appid}"
     config_file = f'{config_path}/configuration.json'
 
-class AboutScreen(Gtk.Window):
-    def __init__(self):
-        super().__init__()
-        builder = Gtk.Builder()
-        builder.add_from_file(AppDetails.ui)
-
-        # Get IDs from UI file
-        self.about_win = builder.get_object('about_window')
-        app_logo = builder.get_object('app_logo')
-        app_name_ver = builder.get_object('app_name_ver')
-        app_desc = builder.get_object('app_desc')
-        app_dev = builder.get_object('app_dev')
-        btn_about_close = builder.get_object('btn_about_close')
-
-        # Set logo
-        icon_theme = Gtk.IconTheme.get_default()
-        pixbuf = icon_theme.load_icon(AppDetails.applogo, 150, 0)
-        app_logo.set_from_pixbuf(pixbuf)
-
-        # Set app details
-        app_name_ver.set_markup(f'<b>{AppDetails.name} {AppDetails.version}</b>')
-        app_desc.set_markup(f'{AppDetails.desc}')
-        app_dev.set_markup(f'Copyright © 2024 {AppDetails.dev}')
-
-        btn_about_close.connect('clicked', self.on_close_clicked)
-
-        self.about_win.set_title('About')
-        self.add(self.about_win)
-        self.about_win.show()
-
-    def on_close_clicked(self, widget):
-        self.destroy()
-
-class Aircrack():
-    def __init__(self, builder):
-        self.handshake_filechooser = builder.get_object('handshake_filechooser')
-        self.bssid_crack = builder.get_object('bssid_crack')
-        self.wordlist_filechooser = builder.get_object('wordlist_filechooser')
-        self.aircrack_status = builder.get_object('aircrack_status')
-        self.aircrack_toggle = builder.get_object('aircrack_toggle')
-
-        self.status_buffer = self.aircrack_status.get_buffer()
-        self.aircrack_toggle.connect('clicked', self.aircrack_crack)
-        self.aircrack_toggle = None
-
-    def setStatus(self, stsTxt):
-        self.status_buffer.set_text(stsTxt)
-    
-    def getStatus(self):
-        startIter, endIter = self.status_buffer.get_bounds()
-        return(self.status_buffer.get_text(startIter, endIter, False))
-
-    def aircrack_crack(self, widget):
-        cap_file = self.handshake_filechooser.get_filename()
-        bssid = self.bssid_crack.get_active_text()
-        wordlist = self.wordlist_filechooser.get_filename()
-        crack_command = f'aircrack-ng -w {wordlist} -b {bssid} {cap_file}'
-
-        print(crack_command)
-
-    def run(self):
-        pass
-
-class MDK3():
-    def __init__(self, builder):
-        self.mdk3_window = builder.get_object('mdk3_window')
-        beacon_flood_toggle = builder.get_object('beacon_flood_toggle')
-        self.check_enc_ap = builder.get_object('check_enc_ap')
-        mdk3_ssid_file = builder.get_object('mdk3_ssid_file')
-        beacon_flood_toggle.connect("state-set", self.beacon_flood_toggle)
-        mdk3_ssid_file.connect("file-set", self.on_ssid_file_set)
-        self.ssid_file = None
-    
-    def run(self):
-        pass
-
-    def on_ssid_file_set(self, file_chooser):
-        self.ssid_file = file_chooser.get_filename()
-
-    def beacon_flood_toggle(self, switch, state):
-        if state:
-            iface = Functions.read_config()['interface']
-            isenc = f'-w' if self.check_enc_ap.get_active() else ''
-            ssid = f'-f {self.ssid_file}' if self.ssid_file else ''
-            command = f'mdk3 {iface} b -s 1000 {isenc} {ssid}'
-            Functions.execute_cmd(command)  
-        else:
-            Functions.terminate_processes('mdk3', 'b')
-
 class Functions:
     def set_app_theme(theme_name, isdark=False):
         settings = Gtk.Settings.get_default()
@@ -181,6 +92,104 @@ class Functions:
             except subprocess.CalledProcessError:
                 pass
         return wifi_interfaces
+
+class AboutScreen(Gtk.Window):
+    def __init__(self):
+        super().__init__()
+        builder = Gtk.Builder()
+        builder.add_from_file(AppDetails.ui)
+
+        # Get IDs from UI file
+        self.about_win = builder.get_object('about_window')
+        app_logo = builder.get_object('app_logo')
+        app_name_ver = builder.get_object('app_name_ver')
+        app_desc = builder.get_object('app_desc')
+        app_dev = builder.get_object('app_dev')
+        btn_about_close = builder.get_object('btn_about_close')
+
+        # Set logo
+        icon_theme = Gtk.IconTheme.get_default()
+        pixbuf = icon_theme.load_icon(AppDetails.applogo, 150, 0)
+        app_logo.set_from_pixbuf(pixbuf)
+
+        # Set app details
+        app_name_ver.set_markup(f'<b>{AppDetails.name} {AppDetails.version}</b>')
+        app_desc.set_markup(f'{AppDetails.desc}')
+        app_dev.set_markup(f'Copyright © 2024 {AppDetails.dev}')
+
+        btn_about_close.connect('clicked', self.on_close_clicked)
+
+        self.about_win.set_title('About')
+        self.add(self.about_win)
+        self.about_win.show()
+
+    def on_close_clicked(self, widget):
+        self.destroy()
+
+class Aircrack(Functions):
+    def __init__(self, builder):
+        self.handshake_filechooser = builder.get_object('handshake_filechooser')
+        self.bssid_crack = builder.get_object('bssid_crack')
+        self.wordlist_filechooser = builder.get_object('wordlist_filechooser')
+        self.aircrack_status = builder.get_object('aircrack_status')
+        self.aircrack_btn = builder.get_object('aircrack_btn')
+
+        self.status_buffer = self.aircrack_status.get_buffer()
+        self.aircrack_btn.connect('clicked', self.aircrack_crack)
+        self.aircrack_toggle = True
+
+    def setStatus(self, stsTxt):
+        self.status_buffer.set_text(stsTxt)
+    
+    def getStatus(self):
+        startIter, endIter = self.status_buffer.get_bounds()
+        return(self.status_buffer.get_text(startIter, endIter, False))
+
+    def aircrack_crack(self, widget):
+        cap_file = self.handshake_filechooser.get_filename()
+        bssid = self.bssid_crack.get_active_text()
+        wordlist = self.wordlist_filechooser.get_filename()
+        command = r"aircrack-ng -w {} {}; echo -en '\n\nEnter to exit: '; read".format(wordlist, cap_file)
+        with open('/tmp/acrack', 'w') as cmd:
+            cmd.write(command)
+        
+        if self.aircrack_toggle:
+            Functions.execute_cmd('x-terminal-emulator -e bash /tmp/acrack')
+            self.aircrack_toggle = False
+            self.aircrack_btn.set_label('Stop Cracking')
+        else:
+            Functions.terminate_processes('aircrack-ng', '-w')
+            self.aircrack_toggle = True
+            self.aircrack_btn.set_label('Start Cracking')
+
+    def run(self):
+        pass
+
+class MDK3():
+    def __init__(self, builder):
+        self.mdk3_window = builder.get_object('mdk3_window')
+        beacon_flood_toggle = builder.get_object('beacon_flood_toggle')
+        self.check_enc_ap = builder.get_object('check_enc_ap')
+        mdk3_ssid_file = builder.get_object('mdk3_ssid_file')
+        beacon_flood_toggle.connect("state-set", self.beacon_flood_toggle)
+        mdk3_ssid_file.connect("file-set", self.on_ssid_file_set)
+        self.ssid_file = None
+    
+    def run(self):
+        pass
+
+    def on_ssid_file_set(self, file_chooser):
+        self.ssid_file = file_chooser.get_filename()
+
+    def beacon_flood_toggle(self, switch, state):
+        if state:
+            iface = Functions.read_config()['interface']
+            isenc = f'-w' if self.check_enc_ap.get_active() else ''
+            ssid = f'-f {self.ssid_file}' if self.ssid_file else ''
+            command = f'mdk3 {iface} b -s 1000 {isenc} {ssid}'
+            Functions.execute_cmd(command)  
+        else:
+            Functions.terminate_processes('mdk3', 'b')
 
 class APRow(Gtk.ListBoxRow):
     def __init__(self, bssid, ch, sec, pwr, ssid, manufacturer):
