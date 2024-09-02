@@ -538,7 +538,7 @@ class HijackerGUI(Gtk.Application):
         main_window = builder.get_object('hijacker_window')
         main_window.set_title(AppDetails.name)
         main_window.set_default_size(400, 500)
-        main_window.set_size_request(400, 500)
+        main_window.set_size_request(300, 400)
 
         # Show the main_window
         main_window.connect('destroy', Gtk.main_quit)
