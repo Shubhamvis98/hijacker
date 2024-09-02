@@ -54,7 +54,14 @@ class AboutScreen(Gtk.Window):
     def on_close_clicked(self, widget):
         self.destroy()
 
-class MDK3(Gtk.Window):
+class Aircrack():
+    def __init__(self, builder):
+        self.builder = builder
+    
+    def run(self):
+        pass
+
+class MDK3():
     def __init__(self, builder):
         self.mdk3_window = builder.get_object('mdk3_window')
         beacon_flood_toggle = builder.get_object('beacon_flood_toggle')
@@ -298,8 +305,7 @@ class Airodump(Functions):
         self.btn_toggle = builder.get_object('btn_toggle')
         self.btn_toggle_img = builder.get_object('btn_toggle_img')
         self.btn_menu = builder.get_object('btn_menu')
-        self.tab_airodump = builder.get_object('tab_airodump')
-        self.ap_list = builder.get_object("ap_list")
+        self.ap_list = builder.get_object("tab_airodump")
 
         self.btn_toggle.connect('clicked', self.scan_toggle)
         self.ap_list.set_homogeneous(False)
@@ -307,7 +313,6 @@ class Airodump(Functions):
 
         self.builder.get_object('btn_config').connect('clicked', Config_Window)
         self.builder.get_object('btn_about').connect('clicked', self.show_about)
-        # self.builder.get_object('btn_mdk3').connect('clicked', self.show_mdk3)
 
     def run(self):
         self.check_config()
@@ -486,6 +491,7 @@ class HijackerGUI(Gtk.Application):
 
         # Initialize Functions
         Airodump(builder).run()
+        Aircrack(builder).run()
         MDK3(builder).run()
 
         # Get The main window from the glade file
