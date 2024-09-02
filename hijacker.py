@@ -129,37 +129,30 @@ class AboutScreen(Gtk.Window):
 class Aircrack(Functions):
     def __init__(self, builder):
         self.handshake_filechooser = builder.get_object('handshake_filechooser')
-        self.bssid_crack = builder.get_object('bssid_crack')
         self.wordlist_filechooser = builder.get_object('wordlist_filechooser')
-        self.aircrack_status = builder.get_object('aircrack_status')
         self.aircrack_btn = builder.get_object('aircrack_btn')
-
-        self.status_buffer = self.aircrack_status.get_buffer()
         self.aircrack_btn.connect('clicked', self.aircrack_crack)
-        self.aircrack_toggle = True
 
-    def setStatus(self, stsTxt):
-        self.status_buffer.set_text(stsTxt)
-    
-    def getStatus(self):
-        startIter, endIter = self.status_buffer.get_bounds()
-        return(self.status_buffer.get_text(startIter, endIter, False))
+    def check_process(self):
+        retcode = self.process.poll()
+        if retcode is not None:
+            self.aircrack_btn.set_label("Start Cracking")
+            return False
+        return True
 
     def aircrack_crack(self, widget):
         cap_file = self.handshake_filechooser.get_filename()
-        bssid = self.bssid_crack.get_active_text()
         wordlist = self.wordlist_filechooser.get_filename()
         command = r"aircrack-ng -w {} {}; echo -en '\n\nEnter to exit: '; read".format(wordlist, cap_file)
         with open('/tmp/acrack', 'w') as cmd:
             cmd.write(command)
         
-        if self.aircrack_toggle:
-            Functions.execute_cmd('x-terminal-emulator -e bash /tmp/acrack')
-            self.aircrack_toggle = False
+        if self.aircrack_btn.get_label() == 'Start Cracking':
+            self.process = Functions.execute_cmd('x-terminal-emulator -e bash /tmp/acrack')
             self.aircrack_btn.set_label('Stop Cracking')
+            GLib.timeout_add(100, self.check_process)
         else:
             Functions.terminate_processes('aircrack-ng', '-w')
-            self.aircrack_toggle = True
             self.aircrack_btn.set_label('Start Cracking')
 
     def run(self):
