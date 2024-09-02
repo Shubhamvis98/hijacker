@@ -341,11 +341,14 @@ class Airodump(Functions):
 
         # Load config
         load_config = Functions.read_config()
-        show_aps = load_config['check_aps'] == 'true'
-        show_stations = load_config['check_stations'] == 'true'
-        channels_all = load_config['channels_all'] == 'true'
+        show_aps = load_config['check_aps']
+        show_stations = load_config['check_stations']
+        channels_all = load_config['channels_all']
         channels_entry = f"-c {load_config['channels_entry']}" if load_config['channels_entry'] != '' else ''
         iface = load_config['interface']
+
+        if channels_all:
+            channels_entry = ''
 
         if iface not in Functions.get_ifaces():
             print(f'{iface} not available. Please change the interface from configuration.')
