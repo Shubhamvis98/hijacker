@@ -56,15 +56,10 @@ class AboutScreen(Gtk.Window):
 
 class MDK3(Gtk.Window):
     def __init__(self, builder):
-        builder = Gtk.Builder()
-        builder.add_from_file(AppDetails.ui)
         self.mdk3_window = builder.get_object('mdk3_window')
-
         beacon_flood_toggle = builder.get_object('beacon_flood_toggle')
         self.check_enc_ap = builder.get_object('check_enc_ap')
         mdk3_ssid_file = builder.get_object('mdk3_ssid_file')
-        btn_mdk3_quit = builder.get_object('btn_mdk3_quit')
-
         beacon_flood_toggle.connect("state-set", self.beacon_flood_toggle)
         mdk3_ssid_file.connect("file-set", self.on_ssid_file_set)
         self.ssid_file = None
@@ -84,10 +79,6 @@ class MDK3(Gtk.Window):
             Functions.execute_cmd(command)  
         else:
             Functions.terminate_processes('mdk3', 'b')
-
-    def on_close_clicked(self, widget):
-        Functions.terminate_processes('mdk3', 'b')
-        self.destroy()
 
 class Functions:
     def set_app_theme(theme_name, isdark=False):
@@ -327,9 +318,6 @@ class Airodump(Functions):
 
     def show_about(self, widget=None):
         AboutScreen()
-
-    def show_mdk3(self, widget=None):
-        MDK3()
 
     def check_config(self):
         default_config_data = {
