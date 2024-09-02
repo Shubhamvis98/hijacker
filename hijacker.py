@@ -87,7 +87,7 @@ class MDK3(Gtk.Window):
             iface = Functions.read_config()['interface']
             isenc = f'-w' if self.check_enc_ap.get_active() else ''
             ssid = f'-f {self.ssid_file}' if self.ssid_file else ''
-            command = f'mdk3 {iface} b {isenc} {ssid}'
+            command = f'mdk3 {iface} b -s 1000 {isenc} {ssid}'
             Functions.execute_cmd(command)  
         else:
             Functions.terminate_processes('mdk3', 'b')
