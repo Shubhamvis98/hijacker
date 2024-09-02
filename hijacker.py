@@ -56,8 +56,31 @@ class AboutScreen(Gtk.Window):
 
 class Aircrack():
     def __init__(self, builder):
-        self.builder = builder
+        self.handshake_filechooser = builder.get_object('handshake_filechooser')
+        self.bssid_crack = builder.get_object('bssid_crack')
+        self.wordlist_filechooser = builder.get_object('wordlist_filechooser')
+        self.aircrack_status = builder.get_object('aircrack_status')
+        self.aircrack_toggle = builder.get_object('aircrack_toggle')
+
+        self.status_buffer = self.aircrack_status.get_buffer()
+        self.aircrack_toggle.connect('clicked', self.aircrack_crack)
+        self.aircrack_toggle = None
+
+    def setStatus(self, stsTxt):
+        self.status_buffer.set_text(stsTxt)
     
+    def getStatus(self):
+        startIter, endIter = self.status_buffer.get_bounds()
+        return(self.status_buffer.get_text(startIter, endIter, False))
+
+    def aircrack_crack(self, widget):
+        cap_file = self.handshake_filechooser.get_filename()
+        bssid = self.bssid_crack.get_active_text()
+        wordlist = self.wordlist_filechooser.get_filename()
+        crack_command = f'aircrack-ng -w {wordlist} -b {bssid} {cap_file}'
+
+        print(crack_command)
+
     def run(self):
         pass
 
