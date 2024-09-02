@@ -226,7 +226,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="save_cap">
+                      <object class="GtkButton" id="btn_save_cap">
                         <property name="label" translatable="yes">Save Captured Data</property>
                         <property name="visible">True</property>
                         <property name="can-focus">True</property>

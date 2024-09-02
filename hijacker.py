@@ -2,7 +2,8 @@
 # Author: Shubham Vishwakarma
 # git/twitter: ShubhamVis98
 
-import gi, threading, subprocess, psutil, signal, csv, os, glob, time, json, pyperclip
+import gi, threading, subprocess, shutil, psutil, signal, csv, os, glob, time, json, pyperclip
+from datetime import datetime
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GdkPixbuf, GLib, Gdk
 os.environ["PYPERCLIP_BACKEND"] = "xclip"
@@ -20,6 +21,7 @@ class AppDetails:
     ui = f'{install_path}/hijacker.ui'
     config_path = f"{os.path.expanduser('~')}/.config/{appid}"
     config_file = f'{config_path}/configuration.json'
+    save_dir = f"{os.path.expanduser('~')}/Hijacker"
 
 class Functions:
     def set_app_theme(theme_name, isdark=False):
@@ -92,6 +94,16 @@ class Functions:
             except subprocess.CalledProcessError:
                 pass
         return wifi_interfaces
+
+    def save_cap(widget=None):
+        current_time = datetime.now().strftime('%Y%m%d%H%M%S')
+        path_to_save = f'{AppDetails.save_dir}/{current_time}'
+        file_list = glob.glob('_tmp*')
+        if file_list:
+            os.makedirs(path_to_save, exist_ok=True)
+            for f in file_list:
+                shutil.move(f, path_to_save)
+            print(f'Captured files saved: {path_to_save}')
 
 class AboutScreen(Gtk.Window):
     def __init__(self):
@@ -331,10 +343,13 @@ class Airodump(Functions):
         self.btn_toggle_img = builder.get_object('btn_toggle_img')
         self.btn_menu = builder.get_object('btn_menu')
         self.ap_list = builder.get_object("tab_airodump")
+        self.btn_save_cap = builder.get_object("btn_save_cap")
 
         self.btn_toggle.connect('clicked', self.scan_toggle)
         self.ap_list.set_homogeneous(False)
         self.listbox = Gtk.ListBox()
+
+        self.btn_save_cap.connect('clicked', Functions.save_cap)
 
         self.builder.get_object('btn_config').connect('clicked', Config_Window)
         self.builder.get_object('btn_about').connect('clicked', self.show_about)
