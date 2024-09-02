@@ -342,7 +342,7 @@ class Airodump(Functions):
         self.btn_toggle = builder.get_object('btn_toggle')
         self.btn_toggle_img = builder.get_object('btn_toggle_img')
         self.btn_menu = builder.get_object('btn_menu')
-        self.ap_list = builder.get_object("tab_airodump")
+        self.ap_list = builder.get_object("airodump_list")
         self.btn_save_cap = builder.get_object("btn_save_cap")
 
         self.btn_toggle.connect('clicked', self.scan_toggle)
