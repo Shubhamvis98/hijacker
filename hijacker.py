@@ -15,8 +15,8 @@ class AppDetails:
     dev = 'Shubham Vishwakarma'
     appid = 'in.fossfrog.hijacker'
     applogo = appid
-    install_path = f'/usr/lib/{appid}'
-    # install_path = '.'
+    # install_path = f'/usr/lib/{appid}'
+    install_path = '.'
     ui = f'{install_path}/hijacker.ui'
     config_path = f"{os.path.expanduser('~')}/.config/{appid}"
     config_file = f'{config_path}/configuration.json'
@@ -55,8 +55,7 @@ class AboutScreen(Gtk.Window):
         self.destroy()
 
 class MDK3(Gtk.Window):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, builder):
         builder = Gtk.Builder()
         builder.add_from_file(AppDetails.ui)
         self.mdk3_window = builder.get_object('mdk3_window')
@@ -67,17 +66,11 @@ class MDK3(Gtk.Window):
         btn_mdk3_quit = builder.get_object('btn_mdk3_quit')
 
         beacon_flood_toggle.connect("state-set", self.beacon_flood_toggle)
-        btn_mdk3_quit.connect('clicked', self.on_close_clicked)
         mdk3_ssid_file.connect("file-set", self.on_ssid_file_set)
-
-        self.mdk3_window.set_default_size(400, 500)
-        self.mdk3_window.set_size_request(400, 500)
-
         self.ssid_file = None
-
-        self.mdk3_window.set_title('MDK3')
-        self.add(self.mdk3_window)
-        self.mdk3_window.show()
+    
+    def run(self):
+        pass
 
     def on_ssid_file_set(self, file_chooser):
         self.ssid_file = file_chooser.get_filename()
@@ -323,7 +316,7 @@ class Airodump(Functions):
 
         self.builder.get_object('btn_config').connect('clicked', Config_Window)
         self.builder.get_object('btn_about').connect('clicked', self.show_about)
-        self.builder.get_object('btn_mdk3').connect('clicked', self.show_mdk3)
+        # self.builder.get_object('btn_mdk3').connect('clicked', self.show_mdk3)
 
     def run(self):
         self.check_config()
@@ -502,6 +495,7 @@ class HijackerGUI(Gtk.Application):
 
         # Initialize Functions
         Airodump(builder).run()
+        MDK3(builder).run()
 
         # Get The main window from the glade file
         main_window = builder.get_object('hijacker_window')
