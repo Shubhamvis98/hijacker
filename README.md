@@ -9,6 +9,8 @@ Aircrack-ng GUI for Linux Phones inspired by chrisk44's Hijacker
 - Deauthenticate all clients of an access point
 - Deauthenticate a specific client from its network
 - MDK3 beacon flooding with custom options and SSID list
+- Save captured data
+- Aircrack-ng gui to crack handshakes
 
 ### Requirements:
 - aircrack-ng

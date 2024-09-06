@@ -2,7 +2,8 @@
 # Author: Shubham Vishwakarma
 # git/twitter: ShubhamVis98
 
-import gi, threading, subprocess, psutil, signal, csv, os, glob, time, json, pyperclip
+import gi, threading, subprocess, shutil, psutil, signal, csv, os, glob, time, json, pyperclip
+from datetime import datetime
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GdkPixbuf, GLib, Gdk
 os.environ["PYPERCLIP_BACKEND"] = "xclip"
@@ -10,91 +11,17 @@ os.environ["PYPERCLIP_BACKEND"] = "xclip"
 
 class AppDetails:
     name = 'Hijacker'
-    version = '1.0'
+    version = '1.1'
     desc = "A Clone of Android's Hijacker for Linux Phones"
     dev = 'Shubham Vishwakarma'
     appid = 'in.fossfrog.hijacker'
     applogo = appid
-    install_path = f'/usr/lib/{appid}'
-    # install_path = '.'
+    # install_path = f'/usr/lib/{appid}'
+    install_path = '.'
     ui = f'{install_path}/hijacker.ui'
     config_path = f"{os.path.expanduser('~')}/.config/{appid}"
     config_file = f'{config_path}/configuration.json'
-
-class AboutScreen(Gtk.Window):
-    def __init__(self):
-        super().__init__()
-        builder = Gtk.Builder()
-        builder.add_from_file(AppDetails.ui)
-
-        # Get IDs from UI file
-        self.about_win = builder.get_object('about_window')
-        app_logo = builder.get_object('app_logo')
-        app_name_ver = builder.get_object('app_name_ver')
-        app_desc = builder.get_object('app_desc')
-        app_dev = builder.get_object('app_dev')
-        btn_about_close = builder.get_object('btn_about_close')
-
-        # Set logo
-        icon_theme = Gtk.IconTheme.get_default()
-        pixbuf = icon_theme.load_icon(AppDetails.applogo, 150, 0)
-        app_logo.set_from_pixbuf(pixbuf)
-
-        # Set app details
-        app_name_ver.set_markup(f'<b>{AppDetails.name} {AppDetails.version}</b>')
-        app_desc.set_markup(f'{AppDetails.desc}')
-        app_dev.set_markup(f'Copyright © 2024 {AppDetails.dev}')
-
-        btn_about_close.connect('clicked', self.on_close_clicked)
-
-        self.about_win.set_title('About')
-        self.add(self.about_win)
-        self.about_win.show()
-
-    def on_close_clicked(self, widget):
-        self.destroy()
-
-class MDK3(Gtk.Window):
-    def __init__(self):
-        super().__init__()
-        builder = Gtk.Builder()
-        builder.add_from_file(AppDetails.ui)
-        self.mdk3_window = builder.get_object('mdk3_window')
-
-        beacon_flood_toggle = builder.get_object('beacon_flood_toggle')
-        self.check_enc_ap = builder.get_object('check_enc_ap')
-        mdk3_ssid_file = builder.get_object('mdk3_ssid_file')
-        btn_mdk3_quit = builder.get_object('btn_mdk3_quit')
-
-        beacon_flood_toggle.connect("state-set", self.beacon_flood_toggle)
-        btn_mdk3_quit.connect('clicked', self.on_close_clicked)
-        mdk3_ssid_file.connect("file-set", self.on_ssid_file_set)
-
-        self.mdk3_window.set_default_size(400, 500)
-        self.mdk3_window.set_size_request(400, 500)
-
-        self.ssid_file = None
-
-        self.mdk3_window.set_title('MDK3')
-        self.add(self.mdk3_window)
-        self.mdk3_window.show()
-
-    def on_ssid_file_set(self, file_chooser):
-        self.ssid_file = file_chooser.get_filename()
-
-    def beacon_flood_toggle(self, switch, state):
-        if state:
-            iface = Functions.read_config()['interface']
-            isenc = f'-w' if self.check_enc_ap.get_active() else ''
-            ssid = f'-f {self.ssid_file}' if self.ssid_file else ''
-            command = f'mdk3 {iface} b -s 1000 {isenc} {ssid}'
-            Functions.execute_cmd(command)  
-        else:
-            Functions.terminate_processes('mdk3', 'b')
-
-    def on_close_clicked(self, widget):
-        Functions.terminate_processes('mdk3', 'b')
-        self.destroy()
+    save_dir = f"{os.path.expanduser('~')}/Hijacker"
 
 class Functions:
     def set_app_theme(theme_name, isdark=False):
@@ -166,7 +93,114 @@ class Functions:
                     wifi_interfaces.append(interface)
             except subprocess.CalledProcessError:
                 pass
+
+        for interface in psutil.net_if_addrs().keys():
+            if 'wlan' in interface and interface not in wifi_interfaces:
+                wifi_interfaces.append(interface)
+
         return wifi_interfaces
+
+    def save_cap(widget=None):
+        current_time = datetime.now().strftime('%Y%m%d%H%M%S')
+        path_to_save = f'{AppDetails.save_dir}/{current_time}'
+        file_list = glob.glob('_tmp*')
+        if file_list:
+            os.makedirs(path_to_save, exist_ok=True)
+            for f in file_list:
+                shutil.move(f, path_to_save)
+            print(f'Captured files saved: {path_to_save}')
+
+class AboutScreen(Gtk.Window):
+    def __init__(self):
+        super().__init__()
+        builder = Gtk.Builder()
+        builder.add_from_file(AppDetails.ui)
+
+        # Get IDs from UI file
+        self.about_win = builder.get_object('about_window')
+        app_logo = builder.get_object('app_logo')
+        app_name_ver = builder.get_object('app_name_ver')
+        app_desc = builder.get_object('app_desc')
+        app_dev = builder.get_object('app_dev')
+        btn_about_close = builder.get_object('btn_about_close')
+
+        # Set logo
+        icon_theme = Gtk.IconTheme.get_default()
+        pixbuf = icon_theme.load_icon(AppDetails.applogo, 150, 0)
+        app_logo.set_from_pixbuf(pixbuf)
+
+        # Set app details
+        app_name_ver.set_markup(f'<b>{AppDetails.name} {AppDetails.version}</b>')
+        app_desc.set_markup(f'{AppDetails.desc}')
+        app_dev.set_markup(f'Copyright © 2024 {AppDetails.dev}')
+
+        btn_about_close.connect('clicked', self.on_close_clicked)
+
+        self.about_win.set_title('About')
+        self.add(self.about_win)
+        self.about_win.show()
+
+    def on_close_clicked(self, widget):
+        self.destroy()
+
+class Aircrack(Functions):
+    def __init__(self, builder):
+        self.handshake_filechooser = builder.get_object('handshake_filechooser')
+        self.wordlist_filechooser = builder.get_object('wordlist_filechooser')
+        self.aircrack_btn = builder.get_object('aircrack_btn')
+        self.aircrack_btn.connect('clicked', self.aircrack_crack)
+
+    def check_process(self):
+        retcode = self.process.poll()
+        if retcode is not None:
+            self.aircrack_btn.set_label("Start Cracking")
+            return False
+        return True
+
+    def aircrack_crack(self, widget):
+        cap_file = self.handshake_filechooser.get_filename()
+        wordlist = self.wordlist_filechooser.get_filename()
+        sudocmd = f"sudo -u {os.environ['SUDO_USER']}" if 'SUDO_USER' in os.environ else ''
+        command = r"{} aircrack-ng -w {} {}; echo -en '\n\nEnter to exit: '; read".format(sudocmd, wordlist, cap_file)
+        with open('/tmp/acrack', 'w') as cmd:
+            cmd.write(command)
+        
+        if self.aircrack_btn.get_label() == 'Start Cracking':
+            self.process = Functions.execute_cmd('x-terminal-emulator -e bash /tmp/acrack')
+            self.aircrack_btn.set_label('Stop Cracking')
+            GLib.timeout_add(100, self.check_process)
+        else:
+            Functions.terminate_processes('aircrack-ng', '-w')
+            self.aircrack_btn.set_label('Start Cracking')
+
+    def run(self):
+        pass
+
+class MDK3():
+    def __init__(self, builder):
+        self.mdk3_window = builder.get_object('mdk3_window')
+        beacon_flood_toggle = builder.get_object('beacon_flood_toggle')
+        self.check_enc_ap = builder.get_object('check_enc_ap')
+        mdk3_ssid_file = builder.get_object('mdk3_ssid_file')
+        beacon_flood_toggle.connect("state-set", self.beacon_flood_toggle)
+        mdk3_ssid_file.connect("file-set", self.on_ssid_file_set)
+        self.ssid_file = None
+    
+    def run(self):
+        pass
+
+    def on_ssid_file_set(self, file_chooser):
+        self.ssid_file = file_chooser.get_filename()
+
+    def beacon_flood_toggle(self, switch, state):
+        if state:
+            iface = Functions.read_config()['interface']
+            isenc = f'-w' if self.check_enc_ap.get_active() else ''
+            ssid = f'-f {self.ssid_file}' if self.ssid_file else ''
+            command = f'mdk3 {iface} b -s 1000 {isenc} {ssid}'
+            Functions.execute_cmd(command)  
+        else:
+            Functions.terminate_processes('mdk3', 'b')
 
 class APRow(Gtk.ListBoxRow):
     def __init__(self, bssid, ch, sec, pwr, ssid, manufacturer):
@@ -210,9 +244,9 @@ class APRow(Gtk.ListBoxRow):
         # other_label = Gtk.Label(label=other, xalign=0)
         second_line = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         second_line.pack_start(bssid_label, True, True, 0)
+        second_line.pack_start(ch_label, True, True, 0)
         second_line.pack_start(pwr_label, True, True, 0)
         second_line.pack_start(sec_label, True, True, 0)
-        second_line.pack_start(ch_label, True, True, 0)
         details_box.pack_start(second_line, False, False, 0)
 
         # Add the button to the ListBoxRow
@@ -314,16 +348,17 @@ class Airodump(Functions):
         self.btn_toggle = builder.get_object('btn_toggle')
         self.btn_toggle_img = builder.get_object('btn_toggle_img')
         self.btn_menu = builder.get_object('btn_menu')
-        self.tab_airodump = builder.get_object('tab_airodump')
-        self.ap_list = builder.get_object("ap_list")
+        self.ap_list = builder.get_object("airodump_list")
+        self.btn_save_cap = builder.get_object("btn_save_cap")
 
         self.btn_toggle.connect('clicked', self.scan_toggle)
         self.ap_list.set_homogeneous(False)
         self.listbox = Gtk.ListBox()
 
+        self.btn_save_cap.connect('clicked', Functions.save_cap)
+
         self.builder.get_object('btn_config').connect('clicked', Config_Window)
         self.builder.get_object('btn_about').connect('clicked', self.show_about)
-        self.builder.get_object('btn_mdk3').connect('clicked', self.show_mdk3)
 
     def run(self):
         self.check_config()
@@ -334,9 +369,6 @@ class Airodump(Functions):
 
     def show_about(self, widget=None):
         AboutScreen()
-
-    def show_mdk3(self, widget=None):
-        MDK3()
 
     def check_config(self):
         default_config_data = {
@@ -360,11 +392,14 @@ class Airodump(Functions):
 
         # Load config
         load_config = Functions.read_config()
-        show_aps = load_config['check_aps'] == 'true'
-        show_stations = load_config['check_stations'] == 'true'
-        channels_all = load_config['channels_all'] == 'true'
+        show_aps = load_config['check_aps']
+        show_stations = load_config['check_stations']
+        channels_all = load_config['channels_all']
         channels_entry = f"-c {load_config['channels_entry']}" if load_config['channels_entry'] != '' else ''
         iface = load_config['interface']
+
+        if channels_all:
+            channels_entry = ''
 
         if iface not in Functions.get_ifaces():
             print(f'{iface} not available. Please change the interface from configuration.')
@@ -502,12 +537,14 @@ class HijackerGUI(Gtk.Application):
 
         # Initialize Functions
         Airodump(builder).run()
+        Aircrack(builder).run()
+        MDK3(builder).run()
 
         # Get The main window from the glade file
         main_window = builder.get_object('hijacker_window')
         main_window.set_title(AppDetails.name)
         main_window.set_default_size(400, 500)
-        main_window.set_size_request(400, 500)
+        main_window.set_size_request(300, 400)
 
         # Show the main_window
         main_window.connect('destroy', Gtk.main_quit)
