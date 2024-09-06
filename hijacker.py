@@ -16,8 +16,8 @@ class AppDetails:
     dev = 'Shubham Vishwakarma'
     appid = 'in.fossfrog.hijacker'
     applogo = appid
-    # install_path = f'/usr/lib/{appid}'
-    install_path = '.'
+    install_path = f'/usr/lib/{appid}'
+    # install_path = '.'
     ui = f'{install_path}/hijacker.ui'
     config_path = f"{os.path.expanduser('~')}/.config/{appid}"
     config_file = f'{config_path}/configuration.json'

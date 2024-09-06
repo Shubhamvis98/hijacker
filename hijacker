@@ -12,6 +12,6 @@ git: ShubhamVis98/hijacker
 
 EOF
 
-installed_path=/usr/lib/hijacker
+installed_path=/usr/lib/in.fossfrog.hijacker
 cd $installed_path
 sudo -E python3 hijacker.py
