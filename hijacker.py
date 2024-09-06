@@ -11,7 +11,7 @@ os.environ["PYPERCLIP_BACKEND"] = "xclip"
 
 class AppDetails:
     name = 'Hijacker'
-    version = '1.0'
+    version = '1.1'
     desc = "A Clone of Android's Hijacker for Linux Phones"
     dev = 'Shubham Vishwakarma'
     appid = 'in.fossfrog.hijacker'
