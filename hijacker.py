@@ -93,6 +93,11 @@ class Functions:
                     wifi_interfaces.append(interface)
             except subprocess.CalledProcessError:
                 pass
+
+        for interface in psutil.net_if_addrs().keys():
+            if 'wlan' in interface and interface not in wifi_interfaces:
+                wifi_interfaces.append(interface)
+
         return wifi_interfaces
 
     def save_cap(widget=None):
@@ -155,7 +160,8 @@ class Aircrack(Functions):
     def aircrack_crack(self, widget):
         cap_file = self.handshake_filechooser.get_filename()
         wordlist = self.wordlist_filechooser.get_filename()
-        command = r"aircrack-ng -w {} {}; echo -en '\n\nEnter to exit: '; read".format(wordlist, cap_file)
+        sudocmd = f"sudo -u {os.environ['SUDO_USER']}" if 'SUDO_USER' in os.environ else ''
+        command = r"{} aircrack-ng -w {} {}; echo -en '\n\nEnter to exit: '; read".format(sudocmd, wordlist, cap_file)
         with open('/tmp/acrack', 'w') as cmd:
             cmd.write(command)
         

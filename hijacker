@@ -9,6 +9,7 @@ cat <<'EOF'
        /___/                             
 
 git: ShubhamVis98/hijacker
+
 EOF
 
 installed_path=/usr/lib/hijacker
