@@ -244,9 +244,9 @@ class APRow(Gtk.ListBoxRow):
         # other_label = Gtk.Label(label=other, xalign=0)
         second_line = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         second_line.pack_start(bssid_label, True, True, 0)
+        second_line.pack_start(ch_label, True, True, 0)
         second_line.pack_start(pwr_label, True, True, 0)
         second_line.pack_start(sec_label, True, True, 0)
-        second_line.pack_start(ch_label, True, True, 0)
         details_box.pack_start(second_line, False, False, 0)
 
         # Add the button to the ListBoxRow
