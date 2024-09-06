@@ -343,8 +343,8 @@
             <property name="spacing">5</property>
             <property name="homogeneous">True</property>
             <child>
-              <object class="GtkButton" id="btn_config_save">
-                <property name="label" translatable="yes">Save</property>
+              <object class="GtkButton" id="btn_config_cancel">
+                <property name="label" translatable="yes">Cancel</property>
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
@@ -356,8 +356,8 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="btn_config_cancel">
-                <property name="label" translatable="yes">Cancel</property>
+              <object class="GtkButton" id="btn_config_save">
+                <property name="label" translatable="yes">Save</property>
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
