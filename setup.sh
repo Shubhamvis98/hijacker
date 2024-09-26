@@ -27,7 +27,7 @@ banner
 
 [ `id -u` -ne 0 ] && echo -e "${RED}[!]Run as root${RESET}" && exit 1
 
-install_dir='/usr/lib/hijacker'
+install_dir='/usr/lib/in.fossfrog.hijacker'
 desktop_file='/usr/share/applications/hijacker.desktop'
 icon_path='/usr/share/icons/hicolor/scalable/apps/in.fossfrog.hijacker.svg'
 
