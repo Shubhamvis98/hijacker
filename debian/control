@@ -1,0 +1,19 @@
+Source: hijacker
+Section: net
+Priority: optional
+Maintainer: Shubham Vishwakarma <shubhamvis98@fossfrog.in>
+Rules-Requires-Root: no
+Build-Depends:
+ debhelper-compat (= 13),
+Standards-Version: 1.2
+Homepage: https://fossfrog.in
+Vcs-Browser: https://fossfrog.in
+Vcs-Git: https://github.com/shubhamvis98/hijacker.git
+
+Package: hijacker
+Architecture: all
+Depends:
+ python3, python3-psutil, python3-pyperclip, aircrack-ng, xclip, macchanger
+Description: wireless WEP/WPA cracking utilities
+ hijacker is an app inspired by android's hijacker app for cracking,
+ deauth and for packet capturing. It uses aircrack-ng as backend.

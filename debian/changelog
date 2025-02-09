@@ -1,0 +1,18 @@
+hijacker (1.2) UNRELEASED; urgency=medium
+
+  * Some UI improvements.
+
+ -- Shubham Vishwakarma <shubhamvis98@fossfrog.in>  Thu, 26 Sep 2024 00:00:00 +0000
+
+hijacker (1.1) UNRELEASED; urgency=medium
+
+  * Added aircrack and airodump ui elements.
+  * MDK3 beacon flooding with custom options and SSID list
+
+ -- Shubham Vishwakarma <shubhamvis98@fossfrog.in>  Mon, 02 Sep 2024 00:00:00 +0000
+
+hijacker (1.0) UNRELEASED; urgency=medium
+
+  * Initial release.
+
+ -- Shubham Vishwakarma <shubhamvis98@fossfrog.in>  Sat, 22 Jun 2024 00:00:00 +0000
